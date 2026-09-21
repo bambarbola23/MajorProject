@@ -1,0 +1,18 @@
+graph TD
+    subgraph Brain["Central Nervous System (Brain)"]
+        Pyramidal["Cortical Pyramidal Neurons (Layers V/VI)"]
+        Synapses["Post-Synaptic Dendritic Potentials"]
+        EEG_Signal["Scalp Surface Potentials (EEG: Fp1, C3, O1...)"]
+        Pyramidal --> Synapses --> EEG_Signal
+    end
+
+    subgraph Muscle["Peripheral Nervous System (Muscles)"]
+        MotorNeuron["Alpha Motor Neuron Depolarization"]
+        Neuromuscular["Acetylcholine Release at Neuromuscular Junction"]
+        Sarcolemma["Sarcolemma Na+ Ion Depolarization Wave"]
+        MUAP["Motor Unit Action Potentials (EMG: Forearm Flexor)"]
+        MotorNeuron --> Neuromuscular --> Sarcolemma --> MUAP
+    end
+
+    EEG_Signal --> BiometricIdentity["EEG Biometric Identity Trait (Alpha/Beta Power)"]
+    MUAP --> LivenessProof["EMG Liveness & Motor Intent Verification"]

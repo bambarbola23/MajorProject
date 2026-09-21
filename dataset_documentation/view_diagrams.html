@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hBCI System & Dataset Visual Diagrams</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        .mermaid { background: #131b2e; padding: 20px; border-radius: 12px; border: 1px solid #1e293b; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto space-y-10">
+
+        <header class="border-b border-slate-800 pb-6">
+            <h1 class="text-3xl font-extrabold text-cyan-400">🧠 hBCI System & Dataset Visual Diagrams</h1>
+            <p class="text-slate-400 mt-2">Interactive visual representations of the biological origins, signal acquisition, system architecture, and authentication flow.</p>
+        </header>
+
+        <!-- Diagram 1 -->
+        <section class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 space-y-4">
+            <h2 class="text-xl font-bold text-emerald-400">1. Biological Origin of EEG & EMG Signals</h2>
+            <p class="text-sm text-slate-400">Shows how cortical pyramidal cell post-synaptic potentials generate scalp EEG, while motor neuron sarcolemma depolarization generates forearm flexor EMG bursts.</p>
+            <div class="mermaid">
+graph TD
+    subgraph Brain["Central Nervous System (Brain)"]
+        Pyramidal["Cortical Pyramidal Neurons (Layers V/VI)"]
+        Synapses["Post-Synaptic Dendritic Potentials"]
+        EEG_Signal["Scalp Surface Potentials (EEG: Fp1, C3, O1...)"]
+        Pyramidal --> Synapses --> EEG_Signal
+    end
+
+    subgraph Muscle["Peripheral Nervous System (Muscles)"]
+        MotorNeuron["Alpha Motor Neuron Depolarization"]
+        Neuromuscular["Acetylcholine Release at Neuromuscular Junction"]
+        Sarcolemma["Sarcolemma Na+ Ion Depolarization Wave"]
+        MUAP["Motor Unit Action Potentials (EMG: Forearm Flexor)"]
+        MotorNeuron --> Neuromuscular --> Sarcolemma --> MUAP
+    end
+
+    EEG_Signal --> BiometricIdentity["EEG Biometric Identity Trait (Alpha/Beta Power)"]
+    MUAP --> LivenessProof["EMG Liveness & Motor Intent Verification"]
+            </div>
+        </section>
+
+        <!-- Diagram 2 -->
+        <section class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 space-y-4">
+            <h2 class="text-xl font-bold text-cyan-400">2. End-to-End Dataset Processing Pipeline</h2>
+            <p class="text-sm text-slate-400">Signal flow from 250 Hz raw sampling through 50Hz IIR Notch filter, 0.5-40Hz Bandpass filter, Welch FFT spectral power extraction, to 7-element fused feature vector.</p>
+            <div class="mermaid">
+flowchart LR
+    A[Raw Biosignals 250Hz] --> B[50Hz IIR Notch Filter]
+    B --> C[0.5-40Hz Bandpass Filter]
+    C --> D[Sliding Window 256 Samples]
+    D --> E[Welch FFT Spectral Power EEG]
+    D --> F[Time-Domain RMS/MAV EMG]
+    E --> G[Fused 7-Element Feature Vector]
+    F --> G
+    G --> H[Random Forest ML Inferences]
+            </div>
+        </section>
+
+        <!-- Diagram 3 -->
+        <section class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 space-y-4">
+            <h2 class="text-xl font-bold text-purple-400">3. 10-20 Head Electrode & EMG Sensor Topology</h2>
+            <p class="text-sm text-slate-400">10-20 International Scalp electrode locations (Fp1, Fp2, C3, C4, O1, O2) and forearm flexor differential EMG sensor placement.</p>
+            <div class="mermaid">
+graph TD
+    subgraph Head["10-20 Scalp EEG Topology"]
+        Fp1["Fp1 (Left Prefrontal)"]
+        Fp2["Fp2 (Right Prefrontal)"]
+        C3["C3 (Left Motor Cortex)"]
+        C4["C4 (Right Motor Cortex)"]
+        O1["O1 (Left Occipital)"]
+        O2["O2 (Right Occipital)"]
+    end
+
+    subgraph Arm["Forearm EMG Topology"]
+        EMG_Lead["Differential Pair (Flexor Digitorum Superficialis)"]
+        Ref_Gnd["Reference Ground (Elbow Olecranon)"]
+    end
+            </div>
+        </section>
+
+        <!-- Diagram 4 -->
+        <section class="bg-slate-900/50 p-6 rounded-xl border border-slate-800 space-y-4">
+            <h2 class="text-xl font-bold text-amber-400">4. 7-Layer System Architecture</h2>
+            <p class="text-sm text-slate-400">Layer 1 Signal Acquisition up through Preprocessing, Feature Extraction, Fusion, Machine Learning, Authentication Engine, and Secure ID Web UI.</p>
+            <div class="mermaid">
+graph TD
+    subgraph Layer1["Layer 1: Signal Acquisition"]
+        EEG["EEG Biosensors (Fp1, Fp2, C3, C4, O1, O2)"]
+        EMG["EMG Biosensor (Forearm Flexor)"]
+    end
+
+    subgraph Layer2["Layer 2: Preprocessing (DSP)"]
+        Notch["50Hz IIR Notch Filter"]
+        BP["0.5 - 40Hz Butterworth Bandpass Filter"]
+    end
+
+    subgraph Layer3["Layer 3: Feature Extraction"]
+        EEG_Feat["Welch Alpha/Beta Spectral Power Ratios"]
+        EMG_Feat["Time-Domain Features (RMS, MAV, VAR)"]
+    end
+
+    subgraph Layer4["Layer 4: Feature Fusion"]
+        Fusion["Multimodal Early Fusion Vector (7 Elements)"]
+    end
+
+    subgraph Layer5["Layer 5: Machine Learning"]
+        IdentityModel["EEG Identity Model (Random Forest)"]
+        GestureModel["EMG Gesture Model (Random Forest)"]
+    end
+
+    subgraph Layer6["Layer 6: Authentication Engine"]
+        AuthEngine["Dual Threshold & Liveness Logic"]
+    end
+
+    subgraph Layer7["Layer 7: Application Layer"]
+        UI["Secure ID Web Interface (Sonar Radar, Head Map, WS)"]
+    end
+
+    EEG --> Notch
+    EMG --> Notch
+    Notch --> BP
+    BP --> EEG_Feat
+    BP --> EMG_Feat
+    EEG_Feat --> Fusion
+    EMG_Feat --> Fusion
+    Fusion --> IdentityModel
+    Fusion --> GestureModel
+    IdentityModel --> AuthEngine
+    GestureModel --> AuthEngine
+    AuthEngine --> UI
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

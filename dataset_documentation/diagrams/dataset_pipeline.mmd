@@ -1,0 +1,9 @@
+flowchart LR
+    A[Raw Biosignals 250Hz] --> B[50Hz IIR Notch Filter]
+    B --> C[0.5-40Hz Bandpass Filter]
+    C --> D[Sliding Window 256 Samples]
+    D --> E[Welch FFT Spectral Power EEG]
+    D --> F[Time-Domain RMS/MAV EMG]
+    E --> G[Fused 7-Element Feature Vector]
+    F --> G
+    G --> H[Random Forest ML Inferences]
