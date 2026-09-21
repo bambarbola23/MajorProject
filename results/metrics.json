@@ -1,0 +1,227 @@
+{
+  "dataset": {
+    "raw_records": 320000,
+    "raw_columns": [
+      "Timestamp (ms)",
+      "Subject_ID",
+      "EEG_Raw",
+      "EMG_Raw",
+      "Gesture_Label"
+    ],
+    "raw_dtypes": {
+      "Timestamp (ms)": "int64",
+      "Subject_ID": "object",
+      "EEG_Raw": "int64",
+      "EMG_Raw": "int64",
+      "Gesture_Label": "int64"
+    },
+    "subjects": 10,
+    "target": "Gesture_Label",
+    "target_classes": [
+      0,
+      1,
+      2
+    ],
+    "class_counts": {
+      "0": 200000,
+      "1": 60000,
+      "2": 60000
+    },
+    "class_percentages": {
+      "0": 62.5,
+      "1": 18.75,
+      "2": 18.75
+    },
+    "missing_values": {
+      "Timestamp (ms)": 0,
+      "Subject_ID": 0,
+      "EEG_Raw": 0,
+      "EMG_Raw": 0,
+      "Gesture_Label": 0
+    },
+    "duplicate_rows": 0,
+    "infinite_values": 0,
+    "feature_windows": 2540,
+    "feature_columns": [
+      "emg_rms",
+      "emg_mav",
+      "emg_var",
+      "eeg_std",
+      "eeg_var",
+      "eeg_alpha_power",
+      "eeg_beta_power",
+      "eeg_alpha_beta_ratio"
+    ]
+  },
+  "models": {
+    "gesture": {
+      "config": {
+        "n_estimators": 100,
+        "max_depth": null,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_features": "sqrt",
+        "bootstrap": true,
+        "random_state": 42,
+        "class_weight": null,
+        "criterion": "gini",
+        "oob_score": false,
+        "n_jobs": null
+      },
+      "metrics": {
+        "accuracy": 0.9960629921259843,
+        "balanced_accuracy": 0.9926961926961928,
+        "macro_precision": 0.9926961926961928,
+        "weighted_precision": 0.9960629921259843,
+        "macro_recall": 0.9926961926961928,
+        "weighted_recall": 0.9960629921259843,
+        "macro_f1": 0.9926961926961928,
+        "weighted_f1": 0.9960629921259843,
+        "mcc": 0.9926098341576957,
+        "cohen_kappa": 0.9926098341576957,
+        "macro_jaccard": 0.9855551754285932,
+        "hamming_loss": 0.003937007874015748,
+        "prediction_time_seconds": 0.008180999997421168,
+        "prediction_rows_per_second": 62095.098418302514,
+        "macro_roc_auc_ovr": 0.9999648955825186,
+        "weighted_roc_auc_ovr": 0.9999809521881519,
+        "log_loss": 0.01733428986535514,
+        "macro_average_precision": 0.9998370039387566,
+        "model_loading_time_seconds": 0.0205242999982147
+      },
+      "classes": [
+        0,
+        1,
+        2
+      ]
+    },
+    "identity": {
+      "config": {
+        "n_estimators": 100,
+        "max_depth": null,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_features": "sqrt",
+        "bootstrap": true,
+        "random_state": 42,
+        "class_weight": null,
+        "criterion": "gini",
+        "oob_score": false,
+        "n_jobs": null
+      },
+      "metrics": {
+        "accuracy": 0.860236220472441,
+        "balanced_accuracy": 0.86,
+        "macro_precision": 0.8614773285549828,
+        "weighted_precision": 0.8615881316857766,
+        "macro_recall": 0.86,
+        "weighted_recall": 0.860236220472441,
+        "macro_f1": 0.8597896243232,
+        "weighted_f1": 0.8599607388653692,
+        "mcc": 0.8449141967226929,
+        "cohen_kappa": 0.844703167249367,
+        "macro_jaccard": 0.7601327713759655,
+        "hamming_loss": 0.13976377952755906,
+        "prediction_time_seconds": 0.00973869999870658,
+        "prediction_rows_per_second": 52163.01971181664,
+        "macro_roc_auc_ovr": 0.9922813286036035,
+        "weighted_roc_auc_ovr": 0.992296843238446,
+        "log_loss": 0.3395737266388792,
+        "macro_average_precision": 0.9443012622426867,
+        "model_loading_time_seconds": 0.032124699999258155
+      },
+      "classes": [
+        "subject_01",
+        "subject_02",
+        "subject_03",
+        "subject_04",
+        "subject_05",
+        "subject_06",
+        "subject_07",
+        "subject_08",
+        "subject_09",
+        "subject_10"
+      ]
+    }
+  },
+  "cross_validation": {
+    "gesture": {
+      "accuracy": {
+        "scores": [
+          0.9940944881889764,
+          0.9940944881889764,
+          0.9960629921259843,
+          0.9921259842519685,
+          0.9921259842519685
+        ],
+        "mean": 0.9937007874015749,
+        "std": 0.0014730934593598166
+      },
+      "balanced_accuracy": {
+        "scores": [
+          0.9896658896658898,
+          0.9884226884226884,
+          0.9926961926961928,
+          0.9853923853923855,
+          0.9893696581196582
+        ],
+        "mean": 0.989109362859363,
+        "std": 0.002346498125261912
+      },
+      "f1_macro": {
+        "scores": [
+          0.9890643632027455,
+          0.9890235002189461,
+          0.9926961926961928,
+          0.9853923853923855,
+          0.9874050563705735
+        ],
+        "mean": 0.9887162995761688,
+        "std": 0.0024009512287948933
+      }
+    },
+    "identity": {
+      "accuracy": {
+        "scores": [
+          0.8622047244094488,
+          0.8622047244094488,
+          0.8740157480314961,
+          0.8799212598425197,
+          0.8818897637795275
+        ],
+        "mean": 0.8720472440944882,
+        "std": 0.008443941176979204
+      },
+      "balanced_accuracy": {
+        "scores": [
+          0.8627450980392156,
+          0.8620000000000001,
+          0.8739607843137256,
+          0.879921568627451,
+          0.8819607843137254
+        ],
+        "mean": 0.8721176470588237,
+        "std": 0.008383282828825528
+      },
+      "f1_macro": {
+        "scores": [
+          0.8619428644819024,
+          0.8621203439182628,
+          0.8741905866803845,
+          0.8796481866685643,
+          0.8817242075933992
+        ],
+        "mean": 0.8719252378685025,
+        "std": 0.008444871519238915
+      }
+    }
+  },
+  "leakage": {
+    "raw_duplicate_rows": 0,
+    "duplicate_feature_rows_train_test": 0,
+    "exact_window_overlap_train_test": 0,
+    "adjacent_50_percent_overlap_pairs_train_test": 736,
+    "assessment": "Potential leakage: random window split places adjacent 50%-overlapping windows across train and test."
+  },
+  "total_evaluation_seconds": 10.20638880000115
+}

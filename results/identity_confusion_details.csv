@@ -1,0 +1,11 @@
+class,true_positive,true_negative,false_positive,false_negative
+subject_01,49,450,7,2
+subject_02,42,452,6,8
+subject_03,41,442,15,10
+subject_04,48,451,6,3
+subject_05,48,456,1,3
+subject_06,42,448,9,9
+subject_07,38,448,9,13
+subject_08,43,454,3,8
+subject_09,38,448,10,12
+subject_10,48,452,5,3

@@ -1,0 +1,8 @@
+pyserial
+numpy
+pandas
+scipy
+scikit-learn
+fastapi
+uvicorn
+matplotlib
