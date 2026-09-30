@@ -1,0 +1,17 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant Sensors as Biosensors (EEG/EMG)
+    participant DSP as DSP Preprocessing
+    participant ML as ML Random Forests
+    participant Auth as Auth Engine
+    participant UI as Secure ID Web UI
+
+    User->>Sensors: Initiate Authentication & Clench Arm
+    Sensors->>DSP: Stream Raw Biosignals (250Hz)
+    DSP->>DSP: Apply 50Hz Notch & 0.5-40Hz Bandpass
+    DSP->>ML: Extract & Fuse 7-Element Feature Vector
+    ML->>Auth: Predict Identity Prob (P_id) & Gesture (G_state)
+    Auth->>Auth: Verify P_id >= 0.80 AND EMG Liveness PASS
+    Auth->>UI: Broadcast Verdict over WebSocket (/ws)
+    UI-->>User: Render Sonar Radar (Green ACCESS GRANTED / Red BLOCKED)

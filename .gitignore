@@ -1,0 +1,11 @@
+﻿.venv/
+__pycache__/
+*.py[cod]
+
+# Generated study and review packets
+/MONDAY_PREP/
+/ME/
+
+# Source context is tracked; omit extracted/generated reference artifacts.
+/Implementation_Context/BCI-FINAL(F).pdf
+/Implementation_Context/pdf_output.txt

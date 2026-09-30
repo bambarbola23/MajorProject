@@ -1,0 +1,45 @@
+graph TD
+    subgraph Layer1["Layer 1: Signal Acquisition"]
+        EEG["EEG Biosensors (Fp1, Fp2, C3, C4, O1, O2)"]
+        EMG["EMG Biosensor (Forearm Flexor)"]
+    end
+
+    subgraph Layer2["Layer 2: Preprocessing (DSP)"]
+        Notch["50Hz IIR Notch Filter"]
+        BP["0.5 - 40Hz Butterworth Bandpass Filter"]
+    end
+
+    subgraph Layer3["Layer 3: Feature Extraction"]
+        EEG_Feat["Welch Alpha/Beta Spectral Power Ratios"]
+        EMG_Feat["Time-Domain Features (RMS, MAV, VAR)"]
+    end
+
+    subgraph Layer4["Layer 4: Feature Fusion"]
+        Fusion["Multimodal Early Fusion Vector (7 Elements)"]
+    end
+
+    subgraph Layer5["Layer 5: Machine Learning"]
+        IdentityModel["EEG Identity Model (Random Forest)"]
+        GestureModel["EMG Gesture Model (Random Forest)"]
+    end
+
+    subgraph Layer6["Layer 6: Authentication Engine"]
+        AuthEngine["Dual Threshold & Liveness Logic"]
+    end
+
+    subgraph Layer7["Layer 7: Application Layer"]
+        UI["Secure ID Web Interface (Sonar Radar, Head Map, WS)"]
+    end
+
+    EEG --> Notch
+    EMG --> Notch
+    Notch --> BP
+    BP --> EEG_Feat
+    BP --> EMG_Feat
+    EEG_Feat --> Fusion
+    EMG_Feat --> Fusion
+    Fusion --> IdentityModel
+    Fusion --> GestureModel
+    IdentityModel --> AuthEngine
+    GestureModel --> AuthEngine
+    AuthEngine --> UI

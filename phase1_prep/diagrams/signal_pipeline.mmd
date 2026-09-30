@@ -1,0 +1,10 @@
+flowchart TD
+    Raw[Raw Biosignal Input] --> Notch[50Hz IIR Notch Filter Q=30]
+    Notch --> BP[0.5-40Hz Butterworth Bandpass 4th Order]
+    BP --> Seg[Window Segmentation 256 Samples]
+    Seg --> Welch[Welch Periodogram FFT]
+    Welch --> AlphaBeta[Alpha 8-12Hz & Beta 13-30Hz Power Ratios]
+    Seg --> TimeDom[RMS, MAV, Variance Calculation]
+    AlphaBeta --> Concatenation[Vector Concatenation]
+    TimeDom --> Concatenation
+    Concatenation --> Output[Fused Biometric Feature Vector]

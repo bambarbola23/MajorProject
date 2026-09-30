@@ -1,0 +1,9 @@
+graph LR
+    A[Raw Biosignals 250Hz] --> B[Sliding Window 256 Samples]
+    B --> C[DSP 50Hz Notch + Bandpass Filter]
+    C --> D[Spectral & Temporal Feature Extract]
+    D --> E[7-Element Feature Vector]
+    E --> F[Random Forest Models Inference]
+    F --> G[Identity Score & Gesture Prediction]
+    G --> H[WebSocket Broadcast /ws]
+    H --> I[Secure ID Web Interface Canvas Render]
