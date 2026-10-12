@@ -4,5 +4,6 @@ pandas
 scipy
 scikit-learn
 fastapi
-uvicorn
+uvicorn[standard]
+websockets
 matplotlib
