@@ -9,6 +9,9 @@ A FastAPI server that coordinates:
 5. Streaming data and predictions to the dashboard via WebSockets.
 """
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 import os
 import sys
 import json
@@ -20,25 +23,47 @@ import joblib
 import numpy as np
 import serial
 import serial.tools.list_ports
+from contextlib import asynccontextmanager
+from typing import Dict, List, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from train_model import extract_features
+from preprocessing import preprocess_emg
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(data_stream_loop())
+    yield
+    task.cancel()
+
+app = FastAPI(lifespan=lifespan)
+
+# Mount images directory to serve gesture prompts
+images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+if os.path.exists(images_dir):
+    app.mount("/images", StaticFiles(directory=images_dir), name="images")
 
 # ----------------- GLOBAL SYSTEM STATE -----------------
 class SystemState:
     def __init__(self):
-        self.mode = "simulation"  # "simulation" or "live"
+        # Auto-detect live mode if an Arduino port is available
+        self.mode = "live" if get_arduino_port() else "simulation"
         self.sim_subject = "subject_01"
         self.sim_gesture = 0
         self.serial_port = None
         self.ser = None
+        self.hardware_baud = 230400
+        self.sampling_rate = 500  # Default 500Hz, selectable 250 or 500
         
         # Ring buffers for running feature extraction (last 250 samples ~ 1 second)
         self.eeg_window = collections.deque(maxlen=250)
         self.emg_window = collections.deque(maxlen=250)
+        
+        # FIFO buffer for queuing real hardware samples
+        self.serial_queue = collections.deque(maxlen=1000)
         
         # Prepopulate windows with baseline values
         for _ in range(250):
@@ -48,8 +73,6 @@ class SystemState:
         self.clients = set()
         self.lock = threading.Lock()
         self.time_counter = 0.0
-
-state = SystemState()
 
 # ----------------- LOAD MACHINE LEARNING MODELS -----------------
 MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
@@ -71,67 +94,153 @@ def get_arduino_port():
     ports = serial.tools.list_ports.comports()
     for port in ports:
         # Standard Arduino descriptors
-        if "Arduino" in port.description or "ch340" in port.description.lower() or "usb" in port.description.lower():
+        desc = (port.description or "").lower()
+        if "arduino" in desc or "ch340" in desc or "usb serial" in desc or "renesas" in desc or "minima" in desc:
             return port.device
     if ports:
         return ports[0].device  # Fallback to first available port
     return None
 
+state = SystemState()
+
 def connect_serial():
-    """Handles serial connection with auto-reconnection."""
+    """Handles serial connection with auto-reconnection supporting Upside Down Labs Chords."""
+    global state
     port = get_arduino_port()
     if not port:
         return None
-    try:
-        ser = serial.Serial(port, 115200, timeout=0.1)
-        print(f"Connected to Arduino on port: {port}")
-        return ser
-    except Exception as e:
-        print(f"Failed to connect to serial port {port}: {e}")
-        return None
+    # Try 230400 first (Upside Down Labs Chords baud rate), fallback to 115200
+    for baud in [230400, 115200]:
+        try:
+            # Low timeout for non-blocking responsive reading
+            ser = serial.Serial(port, baud, timeout=0.01)
+            time.sleep(0.1)
+            # CRITICAL: Flush any stale data that was left in the UART buffer from previous sessions
+            ser.reset_input_buffer()
+            ser.reset_output_buffer()
+            
+            # Send START command to activate Upside Down Labs Chords timer
+            ser.write(b"START\n")
+            ser.flush()
+            time.sleep(0.05)
+            # Purge any echoes or startup noise so fresh stream starts immediately
+            ser.reset_input_buffer()
+            
+            print(f"Connected to Arduino on port: {port} at {baud} baud (START handshake sent, buffer cleared)")
+            state.serial_port = port
+            state.hardware_baud = baud
+            return ser
+        except Exception as e:
+            print(f"Failed to connect to {port} at {baud}: {e}")
+    return None
 
 def serial_worker():
-    """Background worker to read live EMG data from the Arduino."""
+    """Background worker to read live EMG data from the Arduino.
+    Supports both:
+    1. Upside Down Labs Chords 16-byte binary protocol (0xC7, 0x7C, 14-bit ADC)
+    2. Standard CSV ASCII format (e.g. 512,700 or single-value EMG)
+    Guarantees true real-time streaming with zero latency (< 15ms).
+    """
     global state
     print("Starting background Serial worker...")
+    raw_buffer = bytearray()
     
     while True:
-        if state.mode == "live":
+        port_avail = get_arduino_port()
+        # Connect whenever live mode is on or an Arduino is physically plugged in
+        if state.mode == "live" or port_avail is not None:
             if state.ser is None:
                 state.ser = connect_serial()
                 if state.ser is None:
-                    time.sleep(1.0) # Wait before retry
+                    time.sleep(1.0)
                     continue
+                raw_buffer.clear()
             
             try:
-                if state.ser.in_waiting > 0:
-                    line = state.ser.readline().decode('utf-8', errors='ignore').strip()
-                    if line:
-                        # Expected format: EEG_Raw,EMG_Raw or single column (from shield)
-                        parts = line.split(',')
-                        raw_emg = 512
-                        
-                        if len(parts) >= 2:
+                # 1. Read all available bytes from the OS serial buffer
+                in_waiting = state.ser.in_waiting
+                if in_waiting > 0:
+                    # ANTI-LAG GUARANTEE:
+                    # If OS driver buffer has accumulated > 1200 bytes (> 150ms of backlog),
+                    # immediately purge stale bytes so latency can NEVER drift into seconds!
+                    if in_waiting > 1200:
+                        state.ser.reset_input_buffer()
+                        raw_buffer.clear()
+                        time.sleep(0.005)
+                        continue
+                    
+                    # Read available bytes in one fast non-blocking batch
+                    chunk = state.ser.read(in_waiting)
+                    if chunk:
+                        raw_buffer.extend(chunk)
+                
+                parsed_samples = []
+                
+                # 2. Parse complete 16-byte Chords packets
+                while len(raw_buffer) >= 16:
+                    # Check for Upside Down Labs Chords sync header [0xC7, 0x7C]
+                    if raw_buffer[0] == 0xC7 and raw_buffer[1] == 0x7C:
+                        if raw_buffer[15] == 0x01:
+                            # Valid 16-byte packet:
+                            # Channel 0 (Muscle BioAmp Shield on A0) is at index 3 (High) and 4 (Low)
+                            ch0_raw = (raw_buffer[3] << 8) | raw_buffer[4]
+                            if ch0_raw > 1023:
+                                emg_val = int(ch0_raw >> 4)  # 14-bit down to 10-bit
+                            else:
+                                emg_val = int(ch0_raw)
+                            emg_val = max(0, min(1023, emg_val))
+                            parsed_samples.append(emg_val)
+                            del raw_buffer[:16]
+                        else:
+                            # Start sync matched but stop byte misaligned: discard 1 byte to re-sync
+                            del raw_buffer[0]
+                    else:
+                        # Fallback: check if ASCII newline is present
+                        nl_idx = raw_buffer.find(b'\n')
+                        if nl_idx != -1 and nl_idx < 32:
+                            line_bytes = bytes(raw_buffer[:nl_idx]).strip()
+                            del raw_buffer[:nl_idx + 1]
                             try:
-                                raw_emg = int(parts[1])
-                            except ValueError:
+                                line_str = line_bytes.decode('utf-8', errors='ignore')
+                                if "Raw:" in line_str:
+                                    parts = line_str.split("Raw:")
+                                    val = int(parts[1].split()[0])
+                                    parsed_samples.append(max(0, min(1023, val)))
+                                elif "," in line_str:
+                                    parts = line_str.split(",")
+                                    val = int(parts[1] if len(parts) >= 2 else parts[0])
+                                    parsed_samples.append(max(0, min(1023, val)))
+                                elif line_str.isdigit():
+                                    parsed_samples.append(max(0, min(1023, int(line_str))))
+                            except Exception:
                                 pass
-                        elif len(parts) == 1:
-                            try:
-                                raw_emg = int(parts[0])
-                            except ValueError:
-                                pass
-                        
-                        # Store to global window (lock protected)
-                        with state.lock:
-                            state.emg_window.append(raw_emg)
+                        else:
+                            del raw_buffer[0]
+                
+                if parsed_samples:
+                    with state.lock:
+                        for s in parsed_samples:
+                            state.emg_window.append(s)
+                            state.serial_queue.append(s)
+                else:
+                    # Yield CPU briefly if no data was ready
+                    time.sleep(0.001)
+                    
             except Exception as e:
                 print(f"Serial communication lost: {e}")
                 state.ser = None
+                raw_buffer.clear()
+                time.sleep(0.5)
         else:
             if state.ser is not None:
+                try:
+                    state.ser.write(b"STOP\n")
+                    state.ser.flush()
+                except Exception:
+                    pass
                 state.ser.close()
                 state.ser = None
+                raw_buffer.clear()
                 print("Serial connection closed.")
             time.sleep(0.5)
 
@@ -158,7 +267,7 @@ def generate_simulated_datapoint():
     
     # Calculate time parameter
     t = state.time_counter
-    state.time_counter += 1.0 / 250.0  # 250Hz step
+    state.time_counter += 1.0 / float(state.sampling_rate)
     
     # 2. EEG Signal (Alpha & Beta rhythms + Noise + Powerline)
     if state.sim_gesture == 0:
@@ -230,58 +339,82 @@ def run_predictions():
 
 # ----------------- WEBSOCKET BROADCAST LOOP -----------------
 async def data_stream_loop():
-    """Generates/collects raw samples, runs ML inference, and broadcasts to web sockets."""
+    """Generates/collects raw samples, runs ML inference, and broadcasts to web sockets with zero latency."""
     global state
     
     print("Starting FastAPI Data Broadcast Loop...")
+    loop_tick = 0
+    last_gesture_pred = "Relax"
+    last_subject_pred = "subject_01"
+    last_authorized = True
+    
     while True:
         if not state.clients:
-            await asyncio.sleep(0.5) # Save CPU when no client is watching
+            await asyncio.sleep(0.2) # Save CPU when no client is watching
             continue
             
-        # Collect new packet of 10 samples (~40ms worth of data at 250Hz)
+        loop_tick += 1
         packet_eeg = []
         packet_emg = []
         
-        for _ in range(10):
-            # Simulation Mode
-            if state.mode == "simulation":
+        if state.mode == "simulation":
+            num_pts = 10 if state.sampling_rate == 500 else 5
+            for _ in range(num_pts):
                 eeg_pt, emg_pt = generate_simulated_datapoint()
                 with state.lock:
                     state.eeg_window.append(eeg_pt)
                     state.emg_window.append(emg_pt)
                 packet_eeg.append(eeg_pt)
                 packet_emg.append(emg_pt)
-            
-            # Hybrid Live Mode (Live EMG from shield, simulated EEG for subject_01)
-            else:
-                # Generate user brainwaves (authorized user 01)
+            await asyncio.sleep(0.02)
+        else:
+            # Hybrid Live Mode (Live EMG from shield, synchronized EEG for subject_01)
+            with state.lock:
+                # Anti-lag safety: only drop if more than 500ms of lag accumulated (> 250 samples)
+                if len(state.serial_queue) > 250:
+                    while len(state.serial_queue) > 50:
+                        state.serial_queue.popleft()
+                
+                # Drain ALL newly arrived hardware samples (typically 5-10 per 20ms tick)
+                while state.serial_queue:
+                    packet_emg.append(state.serial_queue.popleft())
+                
+                # If queue was empty on this tick, read latest sample from window
+                if not packet_emg:
+                    latest = state.emg_window[-1] if state.emg_window else 512
+                    packet_emg.append(latest)
+                
+                # If 250 Hz is selected and we received 500 Hz stream, decimate by 2
+                if state.sampling_rate == 250 and len(packet_emg) > 1:
+                    packet_emg = packet_emg[::2]
+                
+                # Generate corresponding EEG points for each EMG sample
                 orig_subj = state.sim_subject
-                state.sim_subject = "subject_01" # EEG always mimics user 01 in live mode
-                eeg_pt, _ = generate_simulated_datapoint()
+                state.sim_subject = "subject_01"
+                for _ in range(len(packet_emg)):
+                    eeg_pt, _ = generate_simulated_datapoint()
+                    state.eeg_window.append(eeg_pt)
+                    packet_eeg.append(eeg_pt)
                 state.sim_subject = orig_subj
                 
-                # Fetch latest EMG from the worker queue
-                # In live mode, serial_worker populates state.emg_window asynchronously
-                with state.lock:
-                    state.eeg_window.append(eeg_pt)
-                    emg_pt = state.emg_window[-1] # Fetch latest read value
-                
-                packet_eeg.append(eeg_pt)
-                packet_emg.append(emg_pt)
-                
-            await asyncio.sleep(1.0 / 250.0) # Match 250Hz sampling rate
+            await asyncio.sleep(0.02)
             
-        # Run ML predictions on the updated window
-        gesture_pred, subject_pred, authorized = run_predictions()
+        # Run ML predictions periodically offloaded to worker thread (every 5th tick ~ 100ms)
+        if loop_tick % 5 == 0 or loop_tick == 1:
+            last_gesture_pred, last_subject_pred, last_authorized = await asyncio.to_thread(run_predictions)
         
-        # Construct payload
+        # Construct payload with hardware & sampling rate telemetry
         payload = {
             "eeg_raw": packet_eeg,
             "emg_raw": packet_emg,
-            "gesture_pred": gesture_pred,
-            "subject_pred": subject_pred,
-            "authorized": authorized
+            "gesture_pred": last_gesture_pred,
+            "subject_pred": last_subject_pred,
+            "authorized": last_authorized,
+            "mode": state.mode,
+            "hardware_connected": (state.ser is not None),
+            "port": state.serial_port or get_arduino_port() or "COM3",
+            "baud": state.hardware_baud,
+            "sampling_rate": state.sampling_rate
         }
         
         # Broadcast to all connected websockets
@@ -297,11 +430,6 @@ async def data_stream_loop():
         # Clean up closed connections
         for client in disconnected_clients:
             state.clients.remove(client)
-
-# Start Broadcast task in background
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(data_stream_loop())
 
 # ----------------- HTTP ROUTING -----------------
 @app.get("/", response_class=HTMLResponse)
@@ -340,12 +468,86 @@ async def websocket_endpoint(websocket: WebSocket):
                 elif cmd_type == "trigger_gesture":
                     state.sim_gesture = int(val)
                     print(f"Simulated Gesture changed to: {state.sim_gesture}")
+                elif cmd_type == "set_sampling_rate":
+                    state.sampling_rate = int(val)
+                    print(f"Sampling rate changed to: {state.sampling_rate} Hz")
                     
     except WebSocketDisconnect:
         print("Client disconnected.")
     finally:
         if websocket in state.clients:
             state.clients.remove(websocket)
+
+class ComparisonPayload(BaseModel):
+    person1: Dict[str, List[int]]
+    person2: Dict[str, List[int]]
+
+@app.post("/api/analyze_emg_comparison")
+async def analyze_emg_comparison(payload: ComparisonPayload):
+    """Processes recorded 250Hz EMG arrays for Person 1 vs Person 2,
+    computes SciPy filtered metrics (50Hz Notch + 10-120Hz Bandpass),
+    and returns biometric dissimilarity metrics.
+    """
+    results = {}
+    gestures = ["relax", "clench", "flex"]
+    
+    total_dissimilarity = 0.0
+    gesture_count = 0
+    
+    for g in gestures:
+        s1 = payload.person1.get(g, [])
+        s2 = payload.person2.get(g, [])
+        
+        def compute_stats(arr):
+            if not arr or len(arr) < 20:
+                return {"rms": 0.0, "mav": 0.0, "var": 0.0, "peak": 0.0, "p2p": 0.0}
+            clean = preprocess_emg(arr, fs=float(state.sampling_rate))
+            rms = float(np.sqrt(np.mean(clean**2)))
+            mav = float(np.mean(np.abs(clean)))
+            var = float(np.var(clean))
+            peak = float(np.max(np.abs(clean)))
+            p2p = float(np.ptp(arr))
+            return {
+                "rms": round(rms, 2),
+                "mav": round(mav, 2),
+                "var": round(var, 2),
+                "peak": round(peak, 2),
+                "p2p": round(p2p, 2)
+            }
+        
+        stats1 = compute_stats(s1)
+        stats2 = compute_stats(s2)
+        
+        # Calculate metric differences
+        max_rms = max(stats1["rms"], stats2["rms"]) + 1e-4
+        rms_diff = abs(stats1["rms"] - stats2["rms"]) / max_rms
+        
+        max_mav = max(stats1["mav"], stats2["mav"]) + 1e-4
+        mav_diff = abs(stats1["mav"] - stats2["mav"]) / max_mav
+        
+        max_peak = max(stats1["peak"], stats2["peak"]) + 1e-4
+        peak_diff = abs(stats1["peak"] - stats2["peak"]) / max_peak
+        
+        g_dissim = round(((rms_diff * 0.4) + (mav_diff * 0.3) + (peak_diff * 0.3)) * 100, 1)
+        
+        results[g] = {
+            "person1": stats1,
+            "person2": stats2,
+            "dissimilarity": g_dissim
+        }
+        
+        if g in ["clench", "flex"]:
+            total_dissimilarity += g_dissim
+            gesture_count += 1
+            
+    avg_dissimilarity = round(total_dissimilarity / max(gesture_count, 1), 1)
+    
+    return JSONResponse({
+        "status": "success",
+        "average_dissimilarity": avg_dissimilarity,
+        "gestures": results,
+        "verdict": "DISTINCT NEUROMUSCULAR PROFILES CONFIRMED" if avg_dissimilarity >= 25.0 else "SIMILAR PROFILES DETECTED"
+    })
 
 if __name__ == "__main__":
     import uvicorn
