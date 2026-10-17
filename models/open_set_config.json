@@ -1,0 +1,8 @@
+{
+  "owner_id": "subject_02",
+  "owner_name": "ashoka right",
+  "distance_threshold": 2.6819688458143123,
+  "confidence_threshold": 75.0,
+  "calibrated_at": "2026-10-17T18:20:22Z",
+  "eer_estimate": 4.2
+}

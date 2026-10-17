@@ -65,14 +65,29 @@ Before writing any complex logic, we need to scaffold the project. Here are the 
 
 ---
 
-## User Review Required
+## Current Implementation Status & Milestones Completed
 
-> [!IMPORTANT]
-> **Before I execute this plan and create the initial files, please confirm:**
-> 1. Are you comfortable using **FastAPI** for the backend and **Next.js** for the frontend, or do you have other framework preferences (e.g., Django, Express)?
-> 2. Do you want me to write the files directly into your `Implementation_Context` folder now?
+> [!NOTE]
+> For the comprehensive technical blueprint and guide on how to update/extend every module, see [HBCI_SYSTEM_CONTEXT.md](file:///d:/BCI-BCI/HBCI-Project-2k26-/Implementation_Context/HBCI_SYSTEM_CONTEXT.md).
 
-## Phase 1 Execution Plan
-If approved, my immediate next steps will be:
-1. Generate the `arduino/data_acquisition.ino` file so you have the hardware code ready.
-2. Setup the Python virtual environment and generate the `ml_pipeline/record_data.py` script so you can start visualizing the signals on your computer the moment the hardware arrives.
+### ✅ Stage 1: Real-Time Biometric Lock & Unlock Gate (Completed)
+* Integrated directly under the Dual-Person EMG Studio in [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html).
+* Visual vault doors with animated open/lock icons and glow effects.
+* Synthesized acoustic feedback using browser-native Web Audio API (ascending electronic major chord for `VAULT UNLOCKED`, dual low-frequency sawtooth buzz for `SECURITY LOCKOUT`). Zero external audio files required.
+* Person 1 (Exhibitor / Master Key) vs Person 2 (Visitor / Challenger) token simulation and live hardware challenge.
+
+### ✅ Stage 2: User Dataset Collection & Biometric Enrollment Engine (Completed)
+* Integrated as the **Biometric Enrollment Studio** tab in [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html).
+* Live 4.0-second guided capture for Rest, Clench, and Flex tokens directly from serial hardware buffer or simulator.
+* Mini real-time oscilloscope canvas and extracted feature preview (RMS, Peak, MAV).
+* Local persistence: writes raw CSV trial recordings to `dataset/enrolled_users/raw_recordings/` and updates `dataset/enrolled_users/registry.json`.
+* Enrolled identities table with live status badges and "Set as Owner" actions.
+
+### ✅ Stage 3: Open-Set Biometric Verification & Decision Boundary Calibration (Completed)
+* Implementation in [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py).
+* Multi-feature extraction (RMS, MAV, Variance, Peak, Waveform Length, Zero Crossing Rate).
+* Weighted Mahalanobis distance metric with combined z-score and relative percentage deviation.
+* Calibrated supervised `DecisionTreeClassifier(max_depth=4)` fitting owner envelope vs impostor clusters.
+* Scales to **unlimited unknown visitors** without retraining.
+* Connected to live REST endpoints (`/api/enrolled_users`, `/api/enroll_user`, `/api/calibrate_open_set`, `/api/verify_biometric_token`).
+* Live Hardware Challenge Sandbox testing live muscle contractions against calibrated boundary with instant lock/unlock verdicts.

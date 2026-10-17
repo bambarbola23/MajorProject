@@ -9,3 +9,4 @@ __pycache__/
 # Source context is tracked; omit extracted/generated reference artifacts.
 /Implementation_Context/BCI-FINAL(F).pdf
 /Implementation_Context/pdf_output.txt
+/project_audit/

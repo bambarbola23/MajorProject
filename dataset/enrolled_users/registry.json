@@ -1,0 +1,78 @@
+{
+  "created_at": "2026-10-14T12:17:18Z",
+  "owner_id": "subject_02",
+  "users": {
+    "subject_01": {
+      "name": "Exhibitor (Master Key)",
+      "role": "owner",
+      "enrolled_at": "2026-10-14T12:17:18Z",
+      "features": {
+        "relax": {
+          "rms": 3.583,
+          "mav": 2.858,
+          "var": 12.837,
+          "peak": 11.316,
+          "wl": 3.986,
+          "zcr": 0.491
+        },
+        "clench": {
+          "rms": 110.686,
+          "mav": 78.867,
+          "var": 12251.172,
+          "peak": 509.196,
+          "wl": 116.436,
+          "zcr": 0.532
+        },
+        "flex": {
+          "rms": 69.208,
+          "mav": 46.28,
+          "var": 4789.715,
+          "peak": 306.44,
+          "wl": 70.2,
+          "zcr": 0.532
+        }
+      },
+      "recordings": {
+        "relax": "subject_01_relax_20261014_121718.csv",
+        "clench": "subject_01_clench_20261014_121718.csv",
+        "flex": "subject_01_flex_20261014_121718.csv"
+      }
+    },
+    "subject_02": {
+      "name": "ashoka right",
+      "role": "owner",
+      "enrolled_at": "2026-10-17T18:19:46Z",
+      "features": {
+        "relax": {
+          "rms": 1.56,
+          "mav": 1.176,
+          "var": 2.432,
+          "peak": 6.764,
+          "wl": 1.059,
+          "zcr": 0.2895
+        },
+        "clench": {
+          "rms": 13.157,
+          "mav": 9.174,
+          "var": 173.096,
+          "peak": 67.368,
+          "wl": 8.808,
+          "zcr": 0.312
+        },
+        "flex": {
+          "rms": 49.496,
+          "mav": 27.109,
+          "var": 2449.88,
+          "peak": 283.991,
+          "wl": 25.117,
+          "zcr": 0.3045
+        }
+      },
+      "recordings": {
+        "relax": "subject_02_relax_20261017_181946.csv",
+        "clench": "subject_02_clench_20261017_181946.csv",
+        "flex": "subject_02_flex_20261017_181946.csv"
+      }
+    }
+  }
+}
