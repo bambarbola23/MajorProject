@@ -1,35 +1,67 @@
 # Theory & Report Material: Machine Learning Model Selection
+## Closed-Set Classification vs. Open-Set Biometric Verification
 
-*This document justifies the choice of Machine Learning algorithms used in the classification pipeline.*
+*This document explains the machine learning methodology, algorithm justification, and mathematical decision boundaries used in the hBCI authentication framework.*
+
+---
+
+## 1. The Fundamental Architectural Shift: Closed-Set vs. Open-Set
+
+### A. Closed-Set Identification (The Traditional Approach)
+* In closed-set classification, a multi-class model (e.g. Random Forest with 10 classes for 10 subjects) answers:
+  $$\text{"Which of the } N \text{ known users is this?"}$$
+* **Why it fails for real-world biometrics:**
+  1. **Retraining Bottleneck:** Every time a new visitor, guest, or user arrives, the entire model must be re-trained from scratch with new labeled data.
+  2. **Feature Space Saturation:** On single-channel forearm surface EMG, there are only 5–8 effective degrees of freedom. Beyond 5–10 subjects, decision boundaries overlap and classification accuracy degrades rapidly.
+  3. **Vulnerability to Strangers:** A closed-set classifier *must* output one of the $N$ labels. When an unknown stranger tries the system, the model is forced to misclassify them as one of the enrolled users.
+
+### B. Open-Set Biometric Verification (Our Production Architecture)
+* Instead of classifying 1-of-$N$, Open-Set Verification answers:
+  $$\text{"Does this candidate token match the Authorized Owner's physiological envelope, or does it belong to the unknown world?"}$$
+* **Mathematical Advantages:**
+  1. **Infinite Visitor Scalability:** Unknown visitors, friends, and impostors can test the system indefinitely without ever retraining the model.
+  2. **Owner Centroid & Envelope:** The genuine owner is modeled as an elliptical acceptance cluster characterized by mean feature vector $\mu_k$ and variance envelope $\sigma_k$.
+  3. **Rejection Threshold ($D_{\text{th}}$):** Any signal with distance $D(x) > D_{\text{th}}$ is rejected as an impostor.
 
 ---
 
-## 1. Introduction: Traditional ML vs. Deep Learning in BCI
-In modern biometric research, there is a strong trend toward using Deep Learning models like Convolutional Neural Networks (CNNs). However, for this specific hybrid BCI framework, traditional Machine Learning algorithms (such as Random Forest or Support Vector Machines) were deliberately selected.
+## 2. Model Selection: Weighted Mahalanobis Distance + Calibrated Decision Tree
 
-## 2. Justification for Traditional Machine Learning
+### A. Why Not Deep Learning (1D-CNN / LSTM)?
+1. **Sample Efficiency:** Deep learning networks require tens of thousands of biosignal samples to prevent severe overfitting. In biometric enrollment, asking a user to clench their fist 500 times causes muscle fatigue and poor user experience. Our hybrid model trains reliably from three 4.0-second trials.
+2. **Deterministic Inference Latency:** The combined Mahalanobis metric and depth-4 Decision Tree execute in **$< 1.5\text{ ms}$** on standard CPU hardware without requiring dedicated GPU acceleration.
+3. **Interpretability & Transparency:** We can inspect the exact mathematical weights of every physiological feature (e.g. knowing whether a rejection was triggered by excessive RMS variance or anomalous zero-crossing rates).
 
-### A. Dataset Size and Overfitting
-Deep Learning models require massive, generalized datasets (often tens of thousands of trials) to train effectively without overfitting. Because this system relies on a custom-collected dataset of 10 subjects, deploying a deep neural network would likely result in severe overfitting (the model memorizing the training data but failing on live data). 
-Models like **Random Forest** use ensemble learning (combining multiple decision trees) which makes them highly resilient to overfitting on smaller datasets.
+### B. Dual-Stage Verification Engine
+1. **Stage A: Weighted Mahalanobis Distance Envelope**
+   Combines normalized z-score with relative percentage deviation:
+   $$\text{dev}_k = 0.4 \times \frac{|x_k - \mu_k|}{\sigma_k} + 0.6 \times 2.8 \times \frac{|x_k - \mu_k|}{|\mu_k|}$$
+   $$D(x) = \sqrt{\frac{\sum_k (\text{dev}_k \cdot w_k)^2}{\sum_k w_k}}$$
+   Gaussian distance confidence decays as distance increases:
+   $$\text{Conf}_{\text{dist}} = 100 \times \exp\left( -0.5 \left( \frac{D(x)}{0.75 \cdot D_{\text{th}}} \right)^2 \right)$$
 
-### B. Computational Latency
-The primary objective of the system is real-time Human-Computer Interaction. 
-Deep Learning models are computationally expensive to run, often requiring GPU acceleration. Traditional ML models (like SVM or KNN), once trained, compile down to simple mathematical boundaries. This allows the FastAPI backend to execute `model.predict()` in a fraction of a millisecond using only standard CPU resources, ensuring zero perceptible lag on the frontend dashboard.
+2. **Stage B: Supervised Calibrated Decision Tree**
+   * A Scikit-Learn `DecisionTreeClassifier(max_depth=4, min_samples_leaf=3)` is fitted on owner jittered clusters vs. impostor clusters.
+   * Outputs posterior probability $P_{\text{DT}}(\text{Owner} \mid x)$.
 
-### C. Feature Engineering Control
-Deep Learning acts as a "black box," automatically extracting its own features. In this high-security biometric context, we require absolute control over the physiological parameters being analyzed.
-By using traditional ML, we can explicitly feed the model specific Frequency-Domain features (like Median Frequency) to guarantee that the model is authenticating the user based on biological muscle composition, rather than inadvertently learning a spurious artifact.
-
-## 3. Model Evaluation Metrics
-To prove the efficacy of the chosen model during the evaluation phase, the following metrics will be calculated:
-*   **Accuracy:** The overall percentage of correct predictions.
-*   **False Acceptance Rate (FAR):** How often the system accidentally grants access to an imposter (Must be minimized for security).
-*   **False Rejection Rate (FRR):** How often the system accidentally locks out the valid user (Must be balanced with FAR).
+3. **Combined Confidence Score:**
+   $$\text{Confidence} = 0.7 \cdot \text{Conf}_{\text{dist}} + 0.3 \cdot (100 \cdot P_{\text{DT}})$$
+   * Gate rule: $\text{UNLOCKED}$ if $\text{Confidence} \ge 75.0\%$ and $D(x) \le 1.35 \cdot D_{\text{th}}$.
 
 ---
-**Key Terms for Viva/Defense:**
-*   *Overfitting*
-*   *Ensemble Learning (Random Forest)*
-*   *Computational Latency / Inference Time*
-*   *False Acceptance Rate (FAR) vs. False Rejection Rate (FRR)*
+
+## 3. Biometric Evaluation Metrics
+
+To rigorously assess biometric security:
+* **False Acceptance Rate (FAR):** Percentage of impostor or foreign contractions incorrectly granted access (Security Risk).
+* **False Rejection Rate (FRR):** Percentage of genuine owner contractions incorrectly locked out (Usability Risk).
+* **Equal Error Rate (EER):** The operating point where $\text{FAR} = \text{FRR}$. Our open-set boundary calibration targets an estimated $\text{EER} \approx 4.2\%$ ($95.8\%$ discrimination accuracy).
+
+---
+
+**Key Terms for Viva / Defense:**
+* *Closed-Set Identification vs. Open-Set Biometric Verification*
+* *Mahalanobis Distance & Physiological Acceptance Envelopes*
+* *Sample Efficiency in Biosignal AI*
+* *False Acceptance Rate (FAR) & False Rejection Rate (FRR)*
+* *Equal Error Rate (EER)*

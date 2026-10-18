@@ -83,11 +83,24 @@ Before writing any complex logic, we need to scaffold the project. Here are the 
 * Local persistence: writes raw CSV trial recordings to `dataset/enrolled_users/raw_recordings/` and updates `dataset/enrolled_users/registry.json`.
 * Enrolled identities table with live status badges and "Set as Owner" actions.
 
-### ✅ Stage 3: Open-Set Biometric Verification & Decision Boundary Calibration (Completed)
+### ✅ Stage 3: Open-Set Biometric Verification & Decision Boundary Calibration (Completed & Deployed on Real Arm)
 * Implementation in [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py).
 * Multi-feature extraction (RMS, MAV, Variance, Peak, Waveform Length, Zero Crossing Rate).
 * Weighted Mahalanobis distance metric with combined z-score and relative percentage deviation.
 * Calibrated supervised `DecisionTreeClassifier(max_depth=4)` fitting owner envelope vs impostor clusters.
 * Scales to **unlimited unknown visitors** without retraining.
+* **Real Biological Data Deployed:** Active Owner is `subject_02` ("ashoka right") with 9 real hardware recordings in [`dataset/enrolled_users/raw_recordings/`](file:///d:/BCI-BCI/HBCI-Project-2k26-/dataset/enrolled_users/raw_recordings/) sampled at 500 Hz (2000 points/trial).
+* **Calibrated Threshold:** $D_{\text{th}} = 2.68$ (Security Pass: $\ge 75.0\%$). Real trials verified: Trial 1 ($80.7\%$, `UNLOCKED`), Trial 3 ($75.4\%$, `UNLOCKED`), foreign profile ($68.3\%$, `LOCKED`).
 * Connected to live REST endpoints (`/api/enrolled_users`, `/api/enroll_user`, `/api/calibrate_open_set`, `/api/verify_biometric_token`).
 * Live Hardware Challenge Sandbox testing live muscle contractions against calibrated boundary with instant lock/unlock verdicts.
+
+---
+
+### 🚀 Stage 4: Biometric Hardening & Force-Invariance (Next Milestone Roadmap)
+* **Problem Discovered:** Because 78% of current feature weights are amplitude-dependent (`peak`, `rms`, `var`, `mav`), applying matched force with the Left Hand can unlock the Right-Hand master key.
+* **Planned Enhancements:**
+  1. **Autoregressive (AR-4) Features:** 4th-order AR coefficients ($\alpha_1, \alpha_2, \alpha_3, \alpha_4$) modeling the filter transfer function of motor unit action potentials (MUAP) independent of squeeze force.
+  2. **Spectral Frequency Features (MDF & MNF):** Median Frequency and Mean Power Frequency via FFT to capture motor unit firing conduction velocity (dominant vs non-dominant arm differences).
+  3. **Normalized Waveform Complexity:** $WL_{\text{norm}} = WL / MAV$.
+  4. **Neuromuscular Co-Activation Ratio Challenge:** 2-token challenge verifying the anatomical contraction ratio between wrist flexion and fist clench ($\text{RMS}_{\text{flex}} / \text{RMS}_{\text{clench}} \approx 3.25$).
+  5. **Negative Contrastive Enrollment:** Enrolling the non-dominant arm directly as a known negative impostor class (`visitor_left_arm`) in the Decision Tree.

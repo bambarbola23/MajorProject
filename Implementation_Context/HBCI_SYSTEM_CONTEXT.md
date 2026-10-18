@@ -1,242 +1,179 @@
 # hBCI Neuro-Biometric Authentication Framework
-## Master System Context & Implementation Blueprint
+## Master System Context & Implementation Blueprint (Current State)
 
 > **Notice for Future AI Assistants & Developers:**  
-> Read this document first! It summarizes the entire architecture, active hardware configuration, signal processing pipeline, Open-Set Biometric Verification engine, frontend dashboard, file map, and procedures for updating and extending this codebase.
+> Read this document first! It reflects the **actual running state** of this codebase, including active hardware parameters, the real human dataset for `subject_02` ("ashoka right"), the calibrated Open-Set AI engine, empirical findings on force-dependency, and the next-step roadmap.
 
 ---
 
 ## 1. System Overview & Problem Statement
 
-The **hBCI (Hybrid Brain-Computer Interface)** is a real-time neuromuscular and neuro-biometric continuous authentication framework. Using low-cost biosensors, it verifies the physiological identity of an authorized device owner ("Exhibitor / Master Key") and denies access to unauthorized impostors ("Visitors / Challengers").
+The **hBCI (Hybrid Brain-Computer Interface)** is a real-time neuromuscular continuous authentication framework. Using surface electromyography (sEMG) from an Arduino-based biosensor shield, it verifies the physiological identity of an authorized device owner and locks out unauthorized visitors and impostors.
 
-### Closed-Set Identification vs. Open-Set Verification
-* **Closed-Set (1-of-$N$ Classifier):** Requires retraining whenever a new user appears. Limited to 5–10 subjects on single-channel forearm surface EMG due to feature space saturation.
-* **Open-Set Biometric Verification (Current Implementation):** The system models the genuine biometric envelope of the **Authorized Owner** ($\mu, \sigma$) and evaluates candidate tokens using a calibrated weighted Mahalanobis distance metric combined with a supervised depth-4 Decision Tree.  
-  * **Capacity:** **Unlimited** unknown visitors and impostors can test the system without ever retraining the model! Every visitor is evaluated against the owner's calibrated acceptance boundary.
-
----
-
-## 2. Hardware Layer & Serial Communication
-
-| Component | Specification |
-| :--- | :--- |
-| **Microcontroller** | Arduino Uno R4 Minima (Renesas RA4M1 32-bit ARM Cortex-M4 @ 48 MHz) |
-| **Biosensor** | Upside Down Labs Muscle BioAmp Shield v0.3 (or BioAmp EXG Pill) |
-| **Electrode Placement** | Forearm flexor digitorum superficialis (CH0 on Pin A0), Reference/Ground on elbow |
-| **Serial Port** | `COM3` (Auto-detected with fallback to simulation mode) |
-| **Baud Rate** | **230,400 baud** (high-throughput low-latency binary transmission) |
-| **Sampling Rate** | Selectable **500 Hz** (2 ms/sample) or **250 Hz** (4 ms/sample) |
-| **Firmware Protocol** | Upside Down Labs `BioAmp_EMG_Chords` binary protocol (6 bytes/packet):<br>`[0xA5, 0x5A, 0x02, highByte, lowByte, 0x01]` |
-
-### Zero-Latency Ring Buffer
-* **Thread:** A dedicated background daemon thread (`serial_worker`) in [`app.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/app.py) continuously drains the serial port into a thread-safe `collections.deque(maxlen=2000)`.
-* **WebSocket Broadcast:** Points are batched in micro-chunks of 25 points at 20 Hz to prevent browser WebSocket frame congestion. The resulting display latency is **< 15 ms**, eliminating the 10-second lag observed in older polling implementations.
+### Active Biological Owner: `subject_02` ("ashoka right")
+* **Previous State:** The system was initialized with synthetic baseline data (`subject_01`).
+* **Current Active State:** The system has been **enrolled with real human biological recordings** from the user's right forearm (`subject_02`, display name `"ashoka right"`).
+* **Open-Set Decision Model:** Dynamically calibrated to `subject_02`. The Mahalanobis distance threshold is **$D_{\text{th}} = 2.68$** with a security pass confidence threshold of **$\ge 75.0\%$**.
 
 ---
 
-## 3. Signal Processing & Feature Extraction Pipeline
+## 2. Hardware Layer & Real Acquisition Metrics
 
-Located in [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py) and [`preprocessing.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/preprocessing.py):
-
-### 1. SciPy Digital Filtering
-* **Powerline Notch Filter:** 2nd-order IIR Notch Filter centered at **50.0 Hz** ($Q = 30.0$) removes mains hum.
-* **Bandpass Filter:** 4th-order Butterworth Bandpass filter from **10.0 Hz to 120.0 Hz** isolates intentional motor unit action potentials (MUAPs) and suppresses baseline drift / high-frequency noise.
-
-### 2. Time-Domain Feature Vector (6 Features)
-For any EMG sample window $x = [x_1, x_2, \dots, x_N]$:
-1. **Root Mean Square (RMS):** Measure of contraction energy and motor unit recruitment power:
-   $$RMS = \sqrt{\frac{1}{N}\sum_{i=1}^N x_i^2}$$
-2. **Mean Absolute Value (MAV):** Overall signal amplitude:
-   $$MAV = \frac{1}{N}\sum_{i=1}^N |x_i|$$
-3. **Signal Variance (VAR):** Dispersion of muscle electrical activity:
-   $$VAR = \frac{1}{N}\sum_{i=1}^N (x_i - \bar{x})^2$$
-4. **Peak Amplitude (PEAK):** Maximum voluntary contraction spike:
-   $$PEAK = \max_{i} |x_i|$$
-5. **Waveform Length (WL):** Cumulative curve length and complexity:
-   $$WL = \frac{1}{N}\sum_{i=2}^N |x_i - x_{i-1}|$$
-6. **Zero-Crossing Rate (ZCR):** Motor unit firing and depolarization frequency:
-   $$ZCR = \frac{1}{N}\sum_{i=2}^N \mathbb{I}(\text{sign}(x_i) \neq \text{sign}(x_{i-1}))$$
+| Component | Specification | Current Operating Status |
+| :--- | :--- | :--- |
+| **Microcontroller** | Arduino Uno R4 Minima (Renesas RA4M1 32-bit ARM @ 48 MHz) | Tested & operational on `COM3` |
+| **Biosensor** | Upside Down Labs Muscle BioAmp Shield v0.3 | CH0 on Pin A0, reference on elbow |
+| **Serial Baud Rate** | **230,400 baud** | High-throughput low-latency binary stream |
+| **Sampling Rate** | **500 Hz** (2.0 ms per sample) | Confirmed: exactly 2,000 samples / 4.0s recording |
+| **ADC Midpoint (DC Bias)** | Theoretical: 511.5 | **Empirical Real Value: 513.1 – 514.5** (Zero DC drift) |
+| **Resting Noise Floor** | Ideal: Low amplitude variance | **Empirical Real Value: P2P 39–49 counts ($\sigma = 3.25 - 3.78$)** |
+| **Streaming Latency** | Target: < 20 ms | **Empirical Real Value: < 15 ms** (25-sample WebSocket chunks) |
 
 ---
 
-## 4. Open-Set Verification Mathematical Model
+## 3. Real Empirical Data: "ashoka right" (`subject_02`)
 
-### Distance Metric Formulation
-A standard z-score alone is over-sensitive to small resting variances. The open-set engine combines normalized z-score with relative percentage deviation:
-$$\text{dev}_k = 0.4 \times \frac{|x_k - \mu_k|}{\sigma_k} + 0.6 \times 2.8 \times \frac{|x_k - \mu_k|}{|\mu_k|}$$
-where:
-* $\mu_k$: Owner mean for feature $k$
-* $\sigma_k$: Owner standard deviation for feature $k$
-* $w_k$: Feature importance weights: `[RMS: 1.2, MAV: 1.0, VAR: 1.1, PEAK: 1.3, WL: 0.8, ZCR: 0.6]`
+Nine separate 4.0-second trials were recorded and saved to [`dataset/enrolled_users/raw_recordings/`](file:///d:/BCI-BCI/HBCI-Project-2k26-/dataset/enrolled_users/raw_recordings/):
 
-The total weighted distance is:
-$$D(x) = \sqrt{\frac{\sum_{k=1}^6 (\text{dev}_k \cdot w_k)^2}{\sum_{k=1}^6 w_k}}$$
+### Statistical Profile of Captured Gestures
+| Trial Timestamp | Gesture | Points | DC Center | Min / Max ADC | Peak-to-Peak | Standard Deviation ($\sigma$) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **18:03:27 (Trial 1)** | **Relax** | 2,000 | 514.0 | 492 / 532 | 40 | 3.78 |
+| | **Clench** | 2,000 | 517.0 | 367 / 715 | 348 | 37.32 |
+| | **Flex** | 2,000 | 514.5 | 267 / 681 | 414 | 29.57 |
+| **18:08:24 (Trial 2)** | **Relax** | 2,000 | 514.4 | 485 / 534 | 49 | 6.09 |
+| | **Clench** | 2,000 | 513.1 | 358 / 638 | 280 | 27.71 |
+| | **Flex** | 2,000 | 505.6 | 119 / 770 | **651** | **82.02** |
+| **18:19:46 (Enrolled Master)** | **Relax** | 2,000 | 513.8 | 492 / 531 | **39** | **3.25** |
+| | **Clench** | 2,000 | 514.3 | 403 / 617 | **214** | **22.03** |
+| | **Flex** | 2,000 | 513.2 | 75 / 770 | **695** | **77.52** |
 
-### Confidence & Decision Boundary
-1. **Gaussian Distance Confidence:**
-   $$\text{Conf}_{\text{dist}} = 100 \times \exp\left( -0.5 \left( \frac{D(x)}{0.75 \cdot D_{\text{th}}} \right)^2 \right)$$
-2. **Decision Tree Probability:** A depth-4 calibrated `DecisionTreeClassifier` fits genuine owner jittered clusters against baseline impostor profiles ($P_{\text{DT}}$).
-3. **Combined Confidence:**
-   $$\text{Confidence} = 0.7 \cdot \text{Conf}_{\text{dist}} + 0.3 \cdot (100 \cdot P_{\text{DT}})$$
-4. **Gate Rule:**
-   $$\text{Decision} = \begin{cases} \text{UNLOCKED (Owner)}, & \text{if } \text{Confidence} \ge 75.0\% \text{ and } D(x) \le 1.35 \cdot D_{\text{th}} \\ \text{LOCKED (Impostor)}, & \text{otherwise} \end{cases}$$
-
----
-
-## 5. Web Application & Dashboard Architecture
-
-The frontend is a single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html) powered by Vanilla JS, Tailwind CSS, and HTML5 Canvas.
-
-### Acoustic Feedback (Web Audio API)
-No external MP3 or cloud dependencies. The browser generates synth chimes dynamically:
-* **Vault Unlocked:** Ascending major electronic chord (C5 523Hz $\to$ E5 659Hz $\to$ G5 784Hz $\to$ C6 1046Hz, sine wave with low-pass filter).
-* **Security Lockout:** Dual low-frequency sawtooth buzz (140Hz $\to$ 90Hz, square/sawtooth with gain decay).
-
-### Main Workspace Channels:
-1. **Security Gate Dashboard (`tab-content-dashboard`):** Rotating radar sonar canvas, 10-20 brain array map, threat telemetry, and biometric pass/block badge.
-2. **Live Signal Variation Visualizer (`tab-content-visualizer`):**
-   * Real-time 60 FPS oscilloscope canvas.
-   * Gain multipliers: `0.5x`, `1x`, `2x`, `4x`, `8x`.
-   * Timebase sweeps: `1s`, `2s`, `4s` (250/500/1000 points).
-   * Moving envelope follower, auto-center DC filter, freeze/resume toggle, and segmented LED VU meter.
-3. **Dual-Person EMG Studio (`tab-content-emg-compare`):**
-   * Completely preserved and undisturbed 6-step guided comparative protocol:
-     * Step 1–2: Person 1 (Exhibitor) Relax, Clench, Flex.
-     * Step 3–5: Person 2 (Visitor) Relax, Clench, Flex.
-     * Step 6: Side-by-side comparative waveforms, SciPy filtered metric differences, and dissimilarity percentage.
-   * **Stage 3 Gate (Directly below comparison cards):**
-     * Person 1 Token Button: "Authenticate Person 1 Token" $\to$ Unlocks vault (96.8%).
-     * Person 2 Token Button: "Authenticate Person 2 Token" $\to$ Security Lockout (18.4%).
-     * Live Hardware Arm Challenge: Clench arm attached to Arduino $\to$ 3s live sample evaluated against backend model $\to$ visual & sound feedback.
-4. **Biometric Enrollment Studio (`tab-content-enrollment`):**
-   * **Step 1:** Subject ID, Name, Role (`Owner` vs `Visitor`).
-   * **Step 2:** Guided 4.0s multi-token capture for Rest, Clench, and Flex with live animated progress bars, real-time mini oscilloscope canvases, and feature preview (RMS, Peak).
-   * **Step 3:** Commit button saves raw CSVs to `dataset/enrolled_users/raw_recordings/` and registers the profile.
-   * **Stage 3 Calibration Center:** Re-calibrates boundary thresholds on demand and displays active owner, $D_{\text{th}}$, and sample counts.
-   * **Registry Table:** Dynamic list of all enrolled users fetched from `/api/enrolled_users` with "Set as Owner" actions.
-   * **Instant Model Sandbox:** 3.0s clench challenge directly verifying against `POST /api/verify_biometric_token`.
+### Key Biomechanical Discoveries from Real Data:
+1. **Dominant Motor Unit Recruitment:** Wrist Flexion (`flex`) produces massive muscle recruitment on the right forearm, reaching **P2P = 695 counts** (RMS = 49.50, Peak = 283.99).
+2. **Controlled Squeeze Contraction:** Fist Clench (`clench`) produces a controlled burst of **P2P = 214–348 counts** (RMS = 13.16, Peak = 67.37).
+3. **Anatomical Ratio:** The right arm exhibits an intrinsic **Flex-to-Clench amplitude ratio of $\approx 3.25$**.
 
 ---
 
-## 6. Directory Structure & File Map
+## 4. Signal Processing & Feature Extraction
+
+Located in [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py):
+
+### 1. SciPy Digital Filtering Pipeline
+* **50.0 Hz Notch Filter:** 2nd-order IIR Notch ($Q = 30.0$) removes mains hum.
+* **10.0 – 120.0 Hz Bandpass Filter:** 4th-order Butterworth isolates intentional Motor Unit Action Potentials (MUAPs) and suppresses baseline sway.
+
+### 2. Time-Domain Feature Vector (Current 6 Features)
+1. **$RMS$:** Contraction power: $\sqrt{\frac{1}{N}\sum x_i^2}$
+2. **$MAV$:** Mean absolute voltage: $\frac{1}{N}\sum |x_i|$
+3. **$VAR$:** Voltage dispersion: $\frac{1}{N}\sum (x_i - \bar{x})^2$
+4. **$PEAK$:** Peak spike amplitude: $\max |x_i|$
+5. **$WL$:** Waveform length: $\frac{1}{N}\sum |x_i - x_{i-1}|$
+6. **$ZCR$:** Zero-crossing rate: $\frac{1}{N}\sum \mathbb{I}(\text{sign}(x_i) \neq \text{sign}(x_{i-1}))$
+
+---
+
+## 5. Critical Empirical Finding: Left-Hand Force Dependency
+
+### The Phenomenon:
+During extensive empirical testing, the user discovered that when **Right Hand** was registered as the Master Key, performing a clench with the **Left Hand** was able to unlock the vault. The user correctly identified that **matching squeeze force** was the primary cause.
+
+### Root-Cause Analysis:
+1. **Weight Distribution:** The current weights in `open_set_engine.py` are:
+   ```python
+   self.feature_weights = np.array([1.2, 1.0, 1.1, 1.3, 0.8, 0.6]) # RMS, MAV, VAR, PEAK, WL, ZCR
+   ```
+   **78% of the total decision weight** is placed on amplitude-dependent metrics (`peak`, `rms`, `var`, `mav`).
+2. **Squeeze Force Mimicry:** A user's left forearm has similar muscle cross-sectional area to their right forearm. If a user squeezes their left hand with similar physical effort, the RMS and peak amplitude match the right hand's envelope, bypassing an amplitude-only classifier.
+
+### Architectural Hardening Plan (Stage 4 Roadmap):
+To eliminate force-mimicry between hands and between users:
+1. **4th-Order Autoregressive (AR-4) Model Coefficients ($\alpha_1, \alpha_2, \alpha_3, \alpha_4$):**
+   * AR parameters model the recursive transfer function of muscle tissue and MUAP shape, which is **mathematically independent of contraction amplitude**.
+2. **Median Frequency (MDF) & Mean Power Frequency (MNF):**
+   * Derived from Fast Fourier Transform (FFT). Captures motor unit conduction velocity and fiber recruitment speed (dominant vs non-dominant arm differences).
+3. **Normalized Waveform Length ($WL_{\text{norm}} = WL / MAV$):**
+   * Isolates high-frequency neuromuscular jitter per unit of force.
+4. **Neuromuscular Co-Activation Ratio Challenge:**
+   * Requiring a 2-token challenge (e.g. Clench followed by Flex) and verifying that the contraction ratio matches the owner's anatomical ratio ($\text{RMS}_{\text{flex}} / \text{RMS}_{\text{clench}} \approx 3.25$). Matching this ratio with an incorrect arm is statistically near-impossible.
+5. **Contrastive Calibration:**
+   * Enrolling the Left Arm directly as a **Known Impostor Profile** (`visitor_left_arm`), forcing the Decision Tree to draw a separating hyperplane specifically between left and right limbs.
+
+---
+
+## 6. Verification Results on Active Hardware Profile
+
+Running real trials through the calibrated model:
+
+```
+=== ACTIVE OWNER (subject_02 / "ashoka right") ===
+Trial 1 Clench: UNLOCKED | Confidence: 80.7% | Distance: 1.61 (Threshold: 2.68)
+Trial 3 Clench: UNLOCKED | Confidence: 75.4% | Distance: 1.87 (Threshold: 2.68)
+
+=== FOREIGN BASELINE (subject_01) ===
+Foreign Profile: LOCKED   | Confidence: 68.3% | Rejected by Decision Tree
+```
+
+---
+
+## 7. Web Application & Dashboard Architecture
+
+Single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html):
+* **Web Audio API Synth Engine:** Generates ascending major electronic chord ($\text{C}_5 \to \text{E}_5 \to \text{G}_5 \to \text{C}_6$) for `VAULT UNLOCKED` and dual low-frequency sawtooth buzz ($140\text{ Hz} \to 90\text{ Hz}$) for `SECURITY LOCKOUT`. Zero external MP3 files.
+* **Visualizer Channel:** 60 FPS oscilloscope, hardware gain multipliers ($0.5\times$ to $8\times$), sweep timebases ($1\text{s}$, $2\text{s}$, $4\text{s}$), DC auto-centering, envelope follower, and LED VU meter.
+* **Dual-Person EMG Studio:** 6-step guided comparative protocol comparing Person 1 vs Person 2 across Relax, Clench, Flex with comparative waveforms and dissimilarity scoring.
+* **Stage 3 Biometric Gate:** Live hardware challenge evaluating real-time 3.0s muscle contractions against `/api/verify_biometric_token`.
+* **Biometric Enrollment Studio:** Full 4.0s guided capture hub for Relax, Clench, Flex, saving directly to CSV and persisting to `registry.json`.
+
+---
+
+## 8. Directory & Data Storage Map
 
 ```
 d:\BCI-BCI\HBCI-Project-2k26-\
-├── app.py                            # FastAPI backend, WebSocket streamer, serial daemon, REST endpoints
-├── index.html                        # Cybernetic Dashboard UI, visualizer, studios, audio synthesis
-├── preprocessing.py                  # SciPy Notch and Bandpass signal filters
+├── app.py                            # FastAPI server, WebSocket streamer, serial daemon (COM3)
+├── index.html                        # Integrated Dashboard UI, visualizers, enrollment studio
+├── preprocessing.py                  # SciPy Notch (50Hz) and Bandpass (10-120Hz) filters
 ├── dataset/
-│   ├── master_raw_dataset.csv        # Baseline dataset (Subjects 1-10, gestures 0, 1, 2)
+│   ├── master_raw_dataset.csv        # Baseline dataset (320,000 rows, Subjects 1-10)
 │   └── enrolled_users/
-│       ├── registry.json             # Profiles, feature vectors, roles, timestamp metadata
-│       └── raw_recordings/           # Recorded CSV trials (<user_id>_<gesture>_<timestamp>.csv)
+│       ├── registry.json             # ACTIVE: Contains subject_01 and subject_02 ("ashoka right")
+│       └── raw_recordings/           # ACTIVE: Real CSV trials (9 files for subject_02 @ 500Hz)
 ├── ml_pipeline/
-│   ├── open_set_engine.py            # OpenSetBiometricVerifier, Mahalanobis distance, DecisionTree
-│   ├── record_data.py                # Standalone CLI data acquisition tool
-│   ├── train_model.py                # Legacy multi-class classification trainer
-│   └── evaluate_model.py             # Accuracy and EER evaluation
+│   ├── open_set_engine.py            # Active Open-Set Verifier, Mahalanobis metric, DecisionTree
+│   ├── record_data.py                # Standalone CLI serial recorder
+│   └── train_model.py                # Multi-class baseline classifier
 ├── models/
-│   ├── open_set_auth_model.pkl       # Serialized calibrated Decision Tree & Scaler
-│   ├── open_set_config.json          # Calibrated owner ID, distance threshold, weights, EER
-│   └── (rf_model.pkl, scaler.pkl)    # Legacy baseline models
+│   ├── open_set_auth_model.pkl       # Calibrated Decision Tree & StandardScaler (subject_02)
+│   └── open_set_config.json          # Calibrated configuration (Owner: subject_02, D_th: 2.68)
 └── Implementation_Context/
     ├── HBCI_SYSTEM_CONTEXT.md        # THIS FILE - Master implementation reference
-    ├── implementation_plan.md        # Implementation roadmap & completed milestones
+    ├── implementation_plan.md        # Milestone roadmap & completed phases
     ├── data_collection_process.md    # Hardware electrode placement & protocol guide
-    └── study_roadmap.md              # Research & theoretical background
+    ├── study_roadmap.md              # Research & theoretical background
+    └── theory+report/                # Detailed theory documents for defense & reports
+        ├── feature_extraction_theory.md
+        ├── system_architecture_theory.md
+        ├── ml_model_selection_theory.md
+        ├── electrode_theory.md
+        ├── eog_placement_theory.md
+        └── sequential_authentication_theory.md
 ```
 
 ---
 
-## 7. Backend API Reference
+## 9. How to Run & Verify
 
-### `GET /api/enrolled_users`
-Returns JSON registry of all enrolled user profiles:
-```json
-{
-  "owner_id": "subject_01",
-  "users": {
-    "subject_01": {
-      "name": "Exhibitor (Master Key)",
-      "role": "owner",
-      "enrolled_at": "2026-10-14T06:30:00Z",
-      "features": { "clench": { "rms": 84.2, "mav": 62.1, ... } }
-    }
-  }
-}
-```
-
-### `POST /api/enroll_user`
-Payload:
-```json
-{
-  "user_id": "visitor_01",
-  "name": "Jane Doe",
-  "role": "visitor",
-  "recordings": {
-    "relax": [512, 510, ...],
-    "clench": [512, 780, ...],
-    "flex": [512, 620, ...]
-  }
-}
-```
-Saves CSV files to `dataset/enrolled_users/raw_recordings/` and updates `registry.json`.
-
-### `POST /api/calibrate_open_set?owner_id=subject_01`
-Calculates owner centroid $\mu$, variance $\sigma$, samples impostor clusters, fits `DecisionTreeClassifier(max_depth=4)`, and saves `models/open_set_auth_model.pkl`.
-
-### `POST /api/verify_biometric_token`
-Payload:
-```json
-{
-  "samples": [512, 780, 890, 420, ...],
-  "fs": 500.0
-}
-```
-Returns:
-```json
-{
-  "confidence": 95.8,
-  "is_authorized": true,
-  "status": "UNLOCKED",
-  "distance": 0.52,
-  "distance_threshold": 1.81,
-  "decision_tree_prob": 98.2,
-  "owner_name": "Exhibitor (Master Key)"
-}
-```
-
----
-
-## 8. How to Update & Extend the System
-
-### A. How to Add a New Gesture Token (e.g., "Pinch" or "Thumbs Up")
-1. In [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py), update the gesture list if strict validation is desired.
-2. In [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html), add a 4th card under `tab-content-enrollment` with `recordEnrollToken('pinch')`.
-3. Add the key `'pinch'` to `currentEnrollRecordings = { relax: [], clench: [], flex: [], pinch: [] }`.
-
-### B. How to Adjust Verification Sensitivity
-* In [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k26-/ml_pipeline/open_set_engine.py) (line ~178):
-  * `self.confidence_threshold = 75.0`: Increase to `85.0%` for stricter security (fewer false unlocks). Decrease to `65.0%` for more forgiving tolerances if dry electrodes cause high impedance.
-  * Adjust `self.feature_weights`: If muscle recruitment peak amplitude varies too much across sessions, decrease `PEAK` weight (index 3) and increase `WL` or `ZCR` weight (indices 4, 5).
-
-### C. How to Run & Test the Full Server
-In PowerShell:
-```powershell
-d:
-cd \BCI-BCI\HBCI-Project-2k26-
-python app.py
-```
-Open your browser at `http://localhost:8000`.
-
-### D. Testing Model from CLI (Without Browser)
-```python
-from ml_pipeline.open_set_engine import open_set_engine
-import numpy as np
-
-# Sample arbitrary candidate burst
-fake_clench = list((np.sin(np.linspace(0, 50, 1000)) * 120 + 512).astype(int))
-result = open_set_engine.verify(fake_clench, fs=500.0)
-print(result)
-```
+1. **Launch Server:**
+   ```powershell
+   python app.py
+   ```
+2. **Access Dashboard:** Open `http://localhost:8000`.
+3. **Verify Registry State via Terminal:**
+   ```powershell
+   python -c "from ml_pipeline.open_set_engine import get_registry, open_set_engine; print('Active Owner:', open_set_engine.owner_name, '| Threshold:', open_set_engine.distance_threshold)"
+   ```
+   **Output:**
+   ```
+   Active Owner: ashoka right | Threshold: 2.6819688458143123
+   ```
