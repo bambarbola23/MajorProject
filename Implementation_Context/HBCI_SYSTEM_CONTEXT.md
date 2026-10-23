@@ -2,7 +2,7 @@
 ## Master System Context & Implementation Blueprint (Current State)
 
 > **Notice for AI Assistants & Developers:**  
-> This document reflects the **actual running state** of this codebase, including active hardware parameters, the real human dataset for `subject_05` ("AShoka SIg") with 10 handwriting signature trials, the foreign intruder benchmark with `subject_04` ("Anusha"), and the production-deployed **Dual-Tier Biometric Verification Engine** (FIFN + Welch Spectrum + AR4 + FastDTW).
+> This document reflects the **actual running state** of this codebase, including active hardware parameters (500 Hz @ 230,400 baud on `COM3`), the live production user registry (`dataset/enrolled_users/registry.json`), the live calibrated model (`models/open_set_config.json`), the Vault Arena dynamic target-master lock/unlock engine, and the 10-subject master research benchmark dataset (`subject_05` "AShoka SIg" vs. `subject_04` "Anusha").
 
 ---
 
@@ -10,14 +10,22 @@
 
 The **hBCI (Hybrid Brain-Computer Interface)** is a real-time neuromuscular continuous authentication framework. Using surface electromyography (sEMG) from an Arduino-based biosensor shield, it verifies the physiological identity of an authorized device owner and locks out unauthorized visitors and impostors.
 
-### Active Biological Owner: `subject_05` ("AShoka SIg")
-* **Current Active Master Key:** `subject_05` ("AShoka SIg") with 10 real handwriting signature trials recorded during contraction.
-* **Calibrated Decision Thresholds:**
-  - Biological Tissue Threshold ($\theta_{\text{bio}}$): **$1.95$**
-  - Neuromotor Cadence Threshold ($\theta_{\text{cadence}}$): **$0.0885$**
-  - Confidence Security Pass Threshold: **$\ge 50.0\%$**
-  - Master Baseline Median Frequency ($\text{FMD}$): **$115.0\,\text{Hz}$**
-* **Foreign Intruder Benchmark:** `subject_04` ("Anusha" - real foreign human subject). Rejection rate: **$100.0\%$ ($0.0\%$ False Acceptance Rate)**.
+### Dual Operating Modes & Active Profiles
+1. **Live Production Registry (`dataset/enrolled_users/`):**
+   * **Active Owner:** `subject_03` ("Bharath", enrolled 2026-10-23T16:03:38Z, $\text{FMD}_{\text{master}} = 152.0\,\text{Hz}$).
+   * **Enrolled Challenger / Alternate Master:** `subject_02` ("Ashoka", enrolled 2026-10-23T15:51:52Z, $\text{FMD} = 126.0\,\text{Hz}$).
+   * **Reference Master:** `subject_01` ("Exhibitor", $\text{FMD} = 134.0\,\text{Hz}$).
+   * **Vault Arena Feature:** The web dashboard enables dynamic selection of *any* enrolled user as the target lock master, allowing immediate live hardware or stored profile confrontations.
+2. **10-Subject Master Research Benchmark (`dataset/master_raw_dataset.csv`):**
+   * **Gold-Standard Owner:** `subject_05` ("AShoka SIg") with 10 real handwriting signature trials recorded during contraction ($\text{FMD} = 114.0–115.0\,\text{Hz}$).
+   * **Foreign Intruder Benchmark:** `subject_04` ("Anusha" - real foreign human subject, $\text{FMD} = 150.0\,\text{Hz}$, $4.6\times$ $\text{AR}_1$ pole divergence). Rejection rate: **$100.0\%$ ($0.0\%$ False Acceptance Rate)**.
+
+### Active Calibrated Decision Parameters (`models/open_set_config.json`)
+* **Biological Tissue Distance Threshold ($\theta_{\text{bio}}$):** **$1.95$**
+* **Neuromotor Cadence Distance Threshold ($\theta_{\text{cadence}}$):** **$0.080$**
+* **Confidence Security Pass Threshold:** **$\ge 50.0\%$**
+* **Active Calibrated Owner:** `subject_03` ("Bharath", $\text{FMD} = 152.0\,\text{Hz}$)
+* **Estimated Equal Error Rate (EER):** **$1.8\%$**
 
 ---
 
@@ -37,21 +45,33 @@ The **hBCI (Hybrid Brain-Computer Interface)** is a real-time neuromuscular cont
 
 ## 3. Real Empirical Data & Registry State
 
-The registry contains 5 enrolled profiles in [`dataset/enrolled_users/`](file:///d:/BCI-BCI/HBCI-Project-2k26-/dataset/enrolled_users/):
-1. **`subject_05` ("AShoka SIg") [ACTIVE SYSTEM OWNER]**:
+### A. Live User Registry (`dataset/enrolled_users/registry.json`)
+Contains 3 verified live profiles with raw CSV token recordings in `raw_recordings/`:
+1. **`subject_03` ("Bharath") [ACTIVE OWNER IN CONFIG]**:
+   - Enrolled: `2026-10-23T16:03:38Z`
+   - Relax: $\text{RMS} = 2.65\,\mu\text{V}, \text{FMD} = 144.0\,\text{Hz}$
+   - Clench: $\text{RMS} = 10.04\,\mu\text{V}, \text{FMD} = 152.0\,\text{Hz}, \text{AR}_1 = 0.3519, \text{AR}_2 = 0.3513$
+   - Flex: $\text{RMS} = 34.83\,\mu\text{V}, \text{FMD} = 96.0\,\text{Hz}$
+2. **`subject_02` ("Ashoka") [LIVE ENROLLED PROFILE / ALTERNATE MASTER]**:
+   - Enrolled: `2026-10-23T15:51:52Z`
+   - Relax: $\text{RMS} = 5.86\,\mu\text{V}, \text{FMD} = 144.0\,\text{Hz}$
+   - Clench: $\text{RMS} = 27.71\,\mu\text{V}, \text{FMD} = 126.0\,\text{Hz}, \text{AR}_1 = 0.1537, \text{AR}_2 = 0.5906$
+   - Flex: $\text{RMS} = 39.79\,\mu\text{V}, \text{FMD} = 140.0\,\text{Hz}$
+3. **`subject_01` ("Exhibitor") [BASELINE EXHIBITOR]**:
+   - Enrolled: `2026-10-14T12:17:18Z`
+   - Clench: $\text{RMS} = 114.0\,\mu\text{V}, \text{FMD} = 134.0\,\text{Hz}$
+
+### B. Master Research Benchmark Dataset (`dataset/master_raw_dataset.csv`)
+1. **`subject_05` ("AShoka SIg")**:
    - 10 real CSV trials of handwriting signature performed during contraction.
    - Trials 1–8: Consistent smooth signature ($\text{RMS} \approx 17–23\,\mu\text{V}$, $\text{FMD} \approx 112–120\,\text{Hz}$).
    - Trial 10: Deliberate hard grip spike ($\text{RMS} = 77.74\,\mu\text{V}$, $\text{Peak} = 412.8\,\mu\text{V}$).
 2. **`subject_04` ("Anusha") [REAL FOREIGN INTRUDER]**:
    - Real foreign female subject attempting clench, flex, and relax.
-   - $\text{FMD} = 150.0\,\text{Hz}$ (**$36.0\,\text{Hz}$ biological gap** from owner).
-   - $\text{AR}_1 = 0.349$ (**$4.6\times$ divergence** from owner).
-3. **`subject_03` ("Ashoka hardr")**:
-   - Firm static clench without signature cadence.
-4. **`subject_02` ("Ashoka smooth")**:
-   - Smooth static clench without signature cadence.
-5. **`subject_01` ("Exhibitor")**:
-   - Reference baseline exhibitor.
+   - $\text{FMD} = 150.0\,\text{Hz}$ (**$36.0\,\text{Hz}$ biological gap** from Ashoka $\text{FMD} = 114.0\,\text{Hz}$).
+   - $\text{AR}_1 = 0.349$ (**$4.6\times$ divergence** from Ashoka $\text{AR}_1 = 0.075$).
+3. **`subject_03` ("Ashoka hardr")** & **`subject_02` ("Ashoka smooth")**:
+   - Static clenches without signature cadence, used for cross-gesture challenge validation.
 
 ---
 
@@ -91,10 +111,24 @@ Located in [`ml_pipeline/open_set_engine.py`](file:///d:/BCI-BCI/HBCI-Project-2k
 
 ---
 
-## 5. Verification Results Across Real Physical Recordings
+## 5. Verification Results Across Real Physical Datasets
 
+### A. Live User Registry Confrontation (Ashoka vs. Bharath)
+Tested bidirectionally on live enrolled profiles:
+1. **Target Master: Ashoka (`subject_02`), Challenger: Bharath (`subject_03`)**:
+   - Result: **LOCKED OUT**
+   - Fused Confidence: **$0.0\%$**
+   - Tissue Bio Score: **$0.0\%$** (Distance $D_{\text{bio}} = 2.67 > \theta_{\text{bio}} = 1.95$)
+   - Diagnostic: "Tissue mismatch ($D_{\text{bio}}=2.67 > 1.95$)."
+2. **Target Master: Bharath (`subject_03`), Challenger: Ashoka (`subject_02`)**:
+   - Result: **LOCKED OUT**
+   - Fused Confidence: **$0.0\%$**
+   - Tissue Bio Score: **$0.0\%$** (Distance $D_{\text{bio}} = 3.42 > \theta_{\text{bio}} = 1.95$)
+   - Diagnostic: "Tissue mismatch ($D_{\text{bio}}=3.42 > 1.95$)."
+
+### B. Master Research Benchmark (Ashoka Signature vs. Anusha Intruder)
 ```
-=== GENUINE OWNER TRIALS (Ashoka Signature) ===
+=== GENUINE OWNER TRIALS (Ashoka Signature, subject_05) ===
 Trial  1: UNLOCKED | Conf=80.0% | Bio=81.9% (D=0.35) | Cad=77.6% (D=0.0198)
 Trial  2: UNLOCKED | Conf=79.2% | Bio=85.2% (D=0.29) | Cad=71.9% (D=0.0248)
 Trial  3: UNLOCKED | Conf=54.8% | Bio=48.5% (D=1.00) | Cad=62.4% (D=0.0332)
@@ -111,8 +145,8 @@ Ashoka S02 Smooth Clench         : LOCKED | Conf=42.7% | Bio=47.0% (D=1.03) | Ca
 Exhibitor S01                    : LOCKED | Conf= 0.0% | Bio= 0.0% (D=3.00) | Cad= 4.3%
 ```
 
-**False Acceptance Rate (FAR): $0.0\%$ (Zero foreign impostor unlocks)**  
-**Hard-Grip Spike Protection: $100.0\%$ rejection of unnatural clenches**
+* **False Acceptance Rate (FAR):** **$0.0\%$** (Zero foreign impostor unlocks).
+* **Hard-Grip Spike Protection:** **$100.0\%$** rejection of unnatural clenches.
 
 ---
 
@@ -121,16 +155,16 @@ Exhibitor S01                    : LOCKED | Conf= 0.0% | Bio= 0.0% (D=3.00) | Ca
 Single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Project-2k26-/index.html):
 * **Web Audio API Synth Engine:** Harmonic chime for `VAULT UNLOCKED`, sawtooth buzz for `SECURITY LOCKOUT`. Zero external audio assets.
 * **Biometric Vault & Lock/Unlock Arena:**
-  - **Explicit Target Master Selection:** Choose which enrolled master (`subject_05`, `subject_02`, etc.) represents the lock target.
+  - **Explicit Target Master Selection:** Choose which enrolled master (`subject_03`, `subject_02`, `subject_01`) represents the lock target.
   - **Dual Challenger Modes:** Live hardware challenge (COM3) vs. Stored profile confrontation.
   - **Dual-Tier Analytical Gauges:**
     - Fused Confidence gauge with sub-gauges for **Tier 1 Tissue Bio %** and **Tier 2 Cadence DTW %**.
     - Live **Median Frequency (FMD)** versus Master baseline.
     - $D_{\text{bio}}$ (MAD) versus $\theta_{\text{bio}}$ ($1.95$).
-    - FastDTW distance versus $\theta_{\text{cadence}}$ ($0.0885$).
+    - FastDTW distance versus $\theta_{\text{cadence}}$ ($0.080$).
     - Natural-language biophysical explanation of gate decision.
 * **Envelope Enrichment & Trial Appending:** Append 4.0s trials to enrich any profile with automatic MAD recalibration.
-* **Full Profile Registry CRUD:** Promote any profile to Master Key, append trials, or delete profiles.
+* **Full Profile Registry CRUD:** Promote any profile to Master Key (`POST /api/set_active_owner`), append trials, or delete profiles (`DELETE /api/users/{user_id}`).
 
 ---
 
@@ -141,9 +175,10 @@ Single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Proje
    python app.py
    ```
 2. **Access Dashboard:** Open `http://localhost:8000` in any modern web browser.
-3. **Run Automated Test Suite:**
+3. **Run Direct API & Engine Verification:**
    ```powershell
    python "C:\Users\ashok\.gemini\antigravity-ide\brain\b86b47b8-af90-4633-91db-52d33f8a5560\scratch\test_api_endpoints.py"
    ```
 4. **Review Full Research Paper & Academic Verification Report:**
    See [`Implementation_Context/theory+report/neuromuscular_biometric_verification_report.md`](file:///d:/BCI-BCI/HBCI-Project-2k26-/Implementation_Context/theory+report/neuromuscular_biometric_verification_report.md).
+

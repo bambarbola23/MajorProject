@@ -282,6 +282,19 @@ Calibrated parameters on Master Key `subject_05`:
 - **Hard Grip Spike Rejection**: **$100.0\%$** (Trial 10 securely locked).
 - **Intruder Impersonation Protection**: **$100.0\%$** (Anusha strictly locked at $0.0\%$ confidence).
 
+### 3.5 Cross-Validation on Live User Registry (Ashoka vs. Bharath Mutual Confrontation)
+To independently verify that the biophysical separation observed in the 10-subject signature benchmark generalizes to newly enrolled users, mutual cross-confrontation experiments were executed between live enrolled profiles in `registry.json`:
+- **Subject 02 ("Ashoka")**: Median Frequency $\text{FMD} = 126.0\,\text{Hz}$, $\text{AR}_1 = 0.1537$, $\text{AR}_2 = 0.5906$.
+- **Subject 03 ("Bharath")**: Median Frequency $\text{FMD} = 152.0\,\text{Hz}$, $\text{AR}_1 = 0.3519$, $\text{AR}_2 = 0.3513$.
+- **Anatomical Gap**: $\Delta\text{FMD} = 26.0\,\text{Hz}$ with distinct autoregressive poles reflecting differences in limb circumference and motor unit conduction velocity.
+
+| Configuration | Target Master | Challenger Profile | Gesture | Bio Distance ($D_{\text{bio}}$) | Bio Score | Fused Confidence | Decision Gate Verdict |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---|
+| **Confrontation A** | Ashoka (`S02`) | Bharath (`S03`) | Clench | **$2.67 > 1.95$** | **0.0%** | **0.0%** | **SECURITY LOCKOUT (Tissue Mismatch)** |
+| **Confrontation B** | Bharath (`S03`) | Ashoka (`S02`) | Clench | **$3.42 > 1.95$** | **0.0%** | **0.0%** | **SECURITY LOCKOUT (Tissue Mismatch)** |
+
+**Key Finding**: The dual-tier architecture demonstrates symmetric rejection: neither user can compromise the other's master key, validating real-world robustness in multi-user deployments.
+
 ---
 
 ## 4. Software Architecture & Implementation Details

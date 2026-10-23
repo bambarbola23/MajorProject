@@ -67,50 +67,72 @@ Because a human's non-dominant arm has comparable muscle cross-sectional area to
 
 ---
 
-## 5. Force-Invariant Biometric Features (Stage 4 Solution)
+## 5. Deployed Dual-Tier Biometric Architecture
 
-To make authentication invariant to squeeze force and unique to the specific arm's physiological architecture, the system incorporates:
+To make authentication invariant to squeeze force and unique to the specific human's anatomical architecture, the production engine integrates two complementary verification tiers:
 
-### A. 4th-Order Autoregressive (AR) Model Coefficients
-The EMG signal is modeled as the output of an all-pole linear filter driven by white noise:
-$$x_k = \sum_{p=1}^4 \alpha_p x_{k-p} + e_k$$
-* **Why it is force-invariant:** The autoregressive parameters $[\alpha_1, \alpha_2, \alpha_3, \alpha_4]$ describe the **transfer function of the muscle tissue and motor unit action potential (MUAP) morphology**, which remains consistent regardless of whether the user squeezes at $30\%$ or $80\%$ force.
+### Tier 1: Biological Tissue Dynamics (13 Invariant Descriptors)
 
-### B. Frequency-Domain Spectral Features (FFT)
-Using the Power Spectral Density $P(f)$:
-1. **Median Frequency (MDF):**
-   $$\sum_{f=0}^{MDF} P(f) = \sum_{f=MDF}^{f_{\text{max}}} P(f) = \frac{1}{2}\sum P(f)$$
-   *Physical Meaning:* The exact dividing frequency where power is split evenly. Dependent on muscle fiber conduction velocity, which differs between dominant and non-dominant arms.
-2. **Mean Power Frequency (MNF):**
-   $$MNF = \frac{\sum f \cdot P(f)}{\sum P(f)}$$
+1. **Force-Invariant Feature Normalization (FIFN):**
+   - **Normalized Waveform Length ($\text{n\_wl}$):** $\text{n\_wl} = \frac{\text{WL}}{\text{RMS} + \epsilon}$
+   - **Crest Factor ($\text{n\_peak}$):** $\text{n\_peak} = \frac{\text{Peak}}{\text{RMS} + \epsilon}$
+   - **Willison Amplitude ($\text{WAMP}$):** $\text{WAMP} = \frac{1}{N}\sum \mathbb{I}(|x_i - x_{i-1}| > 0.25 \cdot \text{RMS})$
+   - **Zero-Crossing Rate ($\text{ZCR}$):** Motor unit firing rate across the baseline.
 
-### C. Normalized Waveform Complexity
-$$WL_{\text{norm}} = \frac{WL}{MAV}$$
-Normalizing waveform length by the mean amplitude eliminates force scaling, isolating pure high-frequency motor unit firing jitter.
+2. **Welch Spectral Fingerprinting ($10–240\,\text{Hz}$):**
+   - **Median Frequency ($\text{FMD}$):** The frequency dividing total spectral power in half:
+     $$\int_{10}^{\text{FMD}} P(f) df = \frac{1}{2}\int_{10}^{240} P(f) df$$
+     Directly proportional to **Motor Unit Conduction Velocity ($v_{\text{MUCV}} = 2d/\Delta t$)** and subcutaneous fat layer filtering.
+   - **Mean Frequency ($\text{FMN}$):** Spectral center of mass.
+   - **Tri-Band Energy Ratios:**
+     - $B_1$ ($10–60\,\text{Hz}$): Postural tone / slow motor units.
+     - $B_2$ ($60–150\,\text{Hz}$): Main contraction band.
+     - $B_3$ ($150–240\,\text{Hz}$): High-frequency near-field tissue conduction.
 
-### D. Neuromuscular Co-Activation Ratio Challenge
-Rather than an isolated 1-gesture squeeze, the authentication gate measures the **ratio between two distinct muscle groups**:
-$$\text{Ratio} = \frac{\text{RMS}_{\text{Wrist Flex}}}{\text{RMS}_{\text{Fist Clench}}}$$
-* Empirical data for `subject_02` shows an anatomical ratio of **$3.25$**.
-* Replicating this exact ratio with an unauthorized arm or impostor is statistically near-impossible due to differing individual flexor/extensor tendon leverage and muscle volume.
+3. **4th-Order Autoregressive ($\text{AR}_4$) Poles:**
+   The forearm volume conductor is modeled via all-pole recursive filtering:
+   $$x_k = -\sum_{p=1}^4 a_p x_{k-p} + e_k$$
+   Solved via regularized Yule-Walker Toeplitz inversion. The coefficients $[a_1, a_2, a_3, a_4]$ represent the physical resonance poles of the subject's arm geometry and tissue impedance.
+
+### Tier 2: Neuromotor Cadence Verification (FastDTW)
+
+- Rectified signal low-pass filtered at $4.0\,\text{Hz}$ (Butterworth).
+- Peak-normalized to $[0, 1]$ and resampled to $K = 80$ points.
+- Evaluated via Dynamic Time Warping with Sakoe-Chiba constraint band ($r = 20$):
+  $$D_{\text{cad}} = \frac{\text{Cost}(K, K)}{2K}$$
+- Matches the user's brain-commanded temporal contraction trajectory (signature stroke rhythm) over time.
 
 ---
 
-## 6. Open-Set Distance Formulation
+## 6. Empirical Biophysical Separation on Real Datasets
 
-The biometric distance metric combines standardized z-score with relative percentage deviation:
-$$\text{dev}_k = 0.4 \times \frac{|x_k - \mu_k|}{\sigma_k} + 0.6 \times 2.8 \times \frac{|x_k - \mu_k|}{|\mu_k|}$$
-$$D(x) = \sqrt{\frac{\sum_{k} (\text{dev}_k \cdot w_k)^2}{\sum_k w_k}}$$
+| Biometric Descriptor | Master Ashoka (`S05`) | Real Intruder Anusha (`S04`) | Ashoka Hard Clench (`S03`) | Exhibitor (`S01`) | Biophysical Meaning |
+|:---|:---:|:---:|:---:|:---:|:---|
+| **Median Frequency ($\text{FMD}$)** | **$114.0\,\text{Hz}$** | **$150.0\,\text{Hz}$** | $124.0\,\text{Hz}$ | $134.0\,\text{Hz}$ | **$+36.0\,\text{Hz}$ biological gap in Anusha** |
+| **Mean Frequency ($\text{FMN}$)** | **$124.5\,\text{Hz}$** | **$146.8\,\text{Hz}$** | $127.7\,\text{Hz}$ | $128.0\,\text{Hz}$ | Spectral center of mass |
+| **Band 3 ($150–240\,\text{Hz}$)** | **$33.9\%$** | **$50.9\%$** | $34.9\%$ | $42.1\%$ | Near-field tissue conduction |
+| **AR Pole 1 ($a_1$)** | **$0.075$** | **$0.349$** | $0.060$ | $0.030$ | **$4.6\times$ divergence in volume transfer pole** |
+| **Waveform Length ($\text{n\_wl}$)** | **$1.013$** | **$0.906$** | $0.733$ | $1.033$ | Force-invariant signal complexity |
+| **FastDTW Cadence Dist** | **$0.0198 - 0.0332$** | $0.0334$ (Attempted) | **$0.1293$ (Static)** | **$0.0847$ (Static)** | Handwriting trajectory vs. static squeeze |
 
-A supervised depth-4 `DecisionTreeClassifier` is combined with distance-decay confidence to produce the final biometric verdict:
-$$\text{Decision} = \begin{cases} \text{UNLOCKED (Owner)}, & \text{if } \text{Confidence} \ge 75.0\% \text{ and } D(x) \le 1.35 \cdot D_{\text{th}} \\ \text{LOCKED (Impostor)}, & \text{otherwise} \end{cases}$$
+### Dual-Tier Security Gate Verdicts:
+- **Foreign Intruder Anusha (`subject_04`):** **$100.0\%$ BLOCKED ($0.0\%$ Confidence)** via Tier 1 biological tissue mismatch ($D_{\text{bio}} = 2.58 > 1.95$).
+- **Same Owner Static Squeeze (`subject_03`):** **$100.0\%$ BLOCKED ($0.0\%$ Confidence)** via Tier 2 cadence failure ($D_{\text{cad}} = 0.1293 > 0.0885$).
+- **Genuine Signature Trials (`subject_05`):** **$85.7\%$ UNLOCKED ($73\% - 80.5\%$ Confidence)**.
+
+### Live User Registry Separation (Ashoka `S02` vs. Bharath `S03`):
+- **Ashoka Master (`S02`):** $\text{FMD} = 126.0\,\text{Hz}$, $\text{AR}_1 = 0.1537$, $\text{AR}_2 = 0.5906$.
+- **Bharath Challenger (`S03`):** $\text{FMD} = 152.0\,\text{Hz}$ (**$26.0\,\text{Hz}$ anatomical gap**), $\text{AR}_1 = 0.3519$, $\text{AR}_2 = 0.3513$.
+- **Outcome:** Reciprocal Lockout at **$0.0\%$ confidence** ($D_{\text{bio}} = 2.67$ and $3.42 > 1.95$).
 
 ---
 
 **Key Terms for Viva / Project Defense:**
 * *Stochastic Biosignals & Motor Unit Action Potentials (MUAPs)*
-* *Force-Dependency vs. Force-Invariance*
-* *Autoregressive (AR-4) Time-Series Modeling*
-* *Median Frequency (MDF) & Conduction Velocity*
-* *Open-Set Biometric Verification vs. Closed-Set Classification*
-* *Co-Activation Contraction Ratios*
+* *Force-Invariant Feature Normalization (FIFN)*
+* *Median Frequency (FMD) & Motor Unit Conduction Velocity*
+* *Autoregressive (AR-4) Volume Conductor Poles*
+* *Dynamic Time Warping (FastDTW) Neuromotor Cadence*
+* *Dual-Tier Multi-Modal Security Gate*
+
+

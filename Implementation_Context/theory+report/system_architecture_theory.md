@@ -59,10 +59,14 @@ Rather than sending 500 individual WebSocket frames per second (which floods bro
 
 ## 4. Multi-Stage Pipeline Integration
 
-1. **Live Signal Variation Visualizer:** Real-time oscilloscope with selectable gain ($0.5\times$ to $8\times$) and timebase ($1\text{s}, 2\text{s}, 4\text{s}$).
-2. **Dual-Person EMG Studio:** 6-step guided comparative protocol evaluating neuromuscular difference percentages between two users.
-3. **Stage 3 Biometric Gate:** Real-time hardware challenge testing 3.0-second live contraction slices against the calibrated Open-Set AI model.
-4. **Biometric Enrollment Studio:** 4.0-second token capture for Rest, Clench, Flex, persisting raw CSV trials to disk and updating the user registry.
+1. **Live Signal Variation Visualizer:** Real-time 60 FPS oscilloscope with selectable gain ($0.5\times$ to $8\times$) and timebase ($1\text{s}, 2\text{s}, 4\text{s}$).
+2. **Dual-Person EMG Studio:** Guided comparative protocol evaluating neuromuscular difference percentages between two users across relax, clench, and flex.
+3. **Biometric Vault & Lock/Unlock Arena:**
+   - **Target Master Key Sandbox:** Allows challenging any chosen enrolled master (e.g. `subject_05`, `subject_02`) with live hardware or stored challenger profiles.
+   - **Animated Cybernetic Blast Door:** Hydraulic visual doors with Web Audio API sound synthesis (`VAULT UNLOCKED` chime vs `SECURITY LOCKOUT` alarm).
+   - **Dual-Tier Analytical Gauges:** Displays Fused Confidence, Tier 1 Forearm Tissue Match %, Tier 2 Cadence DTW %, live Median Frequency ($\text{FMD}$) vs master baseline, and transparent diagnostic explanations.
+4. **Biometric Enrollment Studio & Trial Appender:** 4.0-second token capture for Rest, Clench, Flex, persisting raw CSV trials to `dataset/enrolled_users/raw_recordings/` and updating `registry.json` with automatic MAD-scaled recalibration.
+5. **Full Profile Registry CRUD:** Promote any user to global Master Key (`POST /api/set_active_owner`), append trials, or purge profiles and associated CSVs (`DELETE /api/users/{user_id}`).
 
 ---
 
@@ -72,3 +76,4 @@ Rather than sending 500 individual WebSocket frames per second (which floods bro
 * *Micro-Batching vs. Frame Flooding*
 * *End-to-End Latency (< 15 ms)*
 * *Web Audio API Acoustic Synthesis*
+* *Dual-Tier Biometric Security Arena*
