@@ -1,6 +1,6 @@
 {
   "created_at": "2026-10-14T12:17:18Z",
-  "owner_id": "subject_05",
+  "owner_id": "subject_03",
   "users": {
     "subject_01": {
       "name": "Exhibitor (Master Key)",
@@ -8,28 +8,64 @@
       "enrolled_at": "2026-10-14T12:17:18Z",
       "features": {
         "relax": {
-          "rms": 3.583,
-          "mav": 2.858,
-          "var": 12.837,
-          "peak": 11.316,
-          "wl": 3.986,
-          "zcr": 0.491
+          "rms": 3.742,
+          "mav": 2.99,
+          "var": 14.003,
+          "peak": 12.097,
+          "wl": 4.075,
+          "zcr": 0.473,
+          "n_wl": 1.089,
+          "n_peak": 3.2328,
+          "wamp": 0.857,
+          "fmd": 118.0,
+          "fmn": 122.07,
+          "b1_ratio": 0.2067,
+          "b2_ratio": 0.434,
+          "b3_ratio": 0.3593,
+          "ar1": -0.0671,
+          "ar2": 0.1253,
+          "ar3": 0.0162,
+          "ar4": 0.0746
         },
         "clench": {
-          "rms": 110.686,
-          "mav": 78.867,
-          "var": 12251.172,
-          "peak": 509.196,
-          "wl": 116.436,
-          "zcr": 0.532
+          "rms": 113.999,
+          "mav": 81.538,
+          "var": 12995.453,
+          "peak": 510.418,
+          "wl": 117.761,
+          "zcr": 0.515,
+          "n_wl": 1.033,
+          "n_peak": 4.4774,
+          "wamp": 0.768,
+          "fmd": 134.0,
+          "fmn": 128.04,
+          "b1_ratio": 0.2066,
+          "b2_ratio": 0.372,
+          "b3_ratio": 0.4214,
+          "ar1": 0.0298,
+          "ar2": 0.1127,
+          "ar3": -0.0597,
+          "ar4": 0.0823
         },
         "flex": {
-          "rms": 69.208,
-          "mav": 46.28,
-          "var": 4789.715,
-          "peak": 306.44,
-          "wl": 70.2,
-          "zcr": 0.532
+          "rms": 72.579,
+          "mav": 48.478,
+          "var": 5267.333,
+          "peak": 343.878,
+          "wl": 70.165,
+          "zcr": 0.498,
+          "n_wl": 0.9667,
+          "n_peak": 4.738,
+          "wamp": 0.696,
+          "fmd": 132.0,
+          "fmn": 128.01,
+          "b1_ratio": 0.2143,
+          "b2_ratio": 0.3645,
+          "b3_ratio": 0.4211,
+          "ar1": 0.0295,
+          "ar2": 0.0353,
+          "ar3": -0.0652,
+          "ar4": 0.0377
         }
       },
       "recordings": {
@@ -39,150 +75,150 @@
       }
     },
     "subject_02": {
-      "name": "Ashoka smooth",
-      "role": "owner",
-      "enrolled_at": "2026-10-21T01:20:48Z",
+      "name": "Ashoka",
+      "role": "visitor",
+      "enrolled_at": "2026-10-23T15:51:52Z",
       "features": {
         "relax": {
-          "rms": 1.259,
-          "mav": 0.989,
-          "var": 1.584,
-          "peak": 5.336,
-          "wl": 0.856,
-          "zcr": 0.29
+          "rms": 5.861,
+          "mav": 3.485,
+          "var": 34.352,
+          "peak": 67.389,
+          "wl": 5.793,
+          "zcr": 0.5935,
+          "n_wl": 0.9883,
+          "n_peak": 11.4973,
+          "wamp": 0.798,
+          "fmd": 144.0,
+          "fmn": 152.39,
+          "b1_ratio": 0.0622,
+          "b2_ratio": 0.4972,
+          "b3_ratio": 0.4406,
+          "ar1": 0.5143,
+          "ar2": 0.4091,
+          "ar3": 0.1091,
+          "ar4": -0.046
         },
         "clench": {
-          "rms": 2.715,
-          "mav": 1.872,
-          "var": 7.373,
-          "peak": 15.74,
-          "wl": 1.68,
-          "zcr": 0.293
+          "rms": 27.713,
+          "mav": 17.5,
+          "var": 767.99,
+          "peak": 183.294,
+          "wl": 25.487,
+          "zcr": 0.5235,
+          "n_wl": 0.9197,
+          "n_peak": 6.6141,
+          "wamp": 0.6795,
+          "fmd": 126.0,
+          "fmn": 129.45,
+          "b1_ratio": 0.0602,
+          "b2_ratio": 0.6053,
+          "b3_ratio": 0.3345,
+          "ar1": 0.1537,
+          "ar2": 0.5906,
+          "ar3": 0.158,
+          "ar4": 0.2897
         },
         "flex": {
-          "rms": 6.041,
-          "mav": 3.958,
-          "var": 36.492,
-          "peak": 46.338,
-          "wl": 3.682,
-          "zcr": 0.299
+          "rms": 39.788,
+          "mav": 25.205,
+          "var": 1583.066,
+          "peak": 219.61,
+          "wl": 38.213,
+          "zcr": 0.518,
+          "n_wl": 0.9604,
+          "n_peak": 5.5195,
+          "wamp": 0.6385,
+          "fmd": 140.0,
+          "fmn": 141.97,
+          "b1_ratio": 0.0378,
+          "b2_ratio": 0.5331,
+          "b3_ratio": 0.4291,
+          "ar1": 0.3686,
+          "ar2": 0.58,
+          "ar3": 0.2827,
+          "ar4": 0.2621
         }
       },
       "recordings": {
-        "relax": "subject_02_relax_20261021_012048.csv",
-        "clench": "subject_02_clench_20261021_012048.csv",
-        "flex": "subject_02_flex_20261021_012048.csv"
-      }
+        "relax": "subject_02_relax_20261023_155152.csv",
+        "clench": "subject_02_clench_20261023_155152.csv",
+        "flex": "subject_02_flex_20261023_155152.csv"
+      },
+      "trials_count": 1
     },
     "subject_03": {
-      "name": "Ashoka hardr",
+      "name": "Bharath",
       "role": "owner",
-      "enrolled_at": "2026-10-21T01:22:45Z",
+      "enrolled_at": "2026-10-23T16:03:38Z",
       "features": {
         "relax": {
-          "rms": 2.189,
-          "mav": 1.642,
-          "var": 4.793,
-          "peak": 12.184,
-          "wl": 1.439,
-          "zcr": 0.292
+          "rms": 2.653,
+          "mav": 2.071,
+          "var": 7.038,
+          "peak": 14.704,
+          "wl": 3.271,
+          "zcr": 0.559,
+          "n_wl": 1.233,
+          "n_peak": 5.5424,
+          "wamp": 0.8665,
+          "fmd": 144.0,
+          "fmn": 146.77,
+          "b1_ratio": 0.0747,
+          "b2_ratio": 0.4649,
+          "b3_ratio": 0.4604,
+          "ar1": 0.2885,
+          "ar2": 0.2699,
+          "ar3": 0.0947,
+          "ar4": 0.098
         },
         "clench": {
-          "rms": 19.892,
-          "mav": 10.324,
-          "var": 395.698,
-          "peak": 175.659,
-          "wl": 9.977,
-          "zcr": 0.3
+          "rms": 10.043,
+          "mav": 7.658,
+          "var": 100.862,
+          "peak": 48.976,
+          "wl": 12.096,
+          "zcr": 0.571,
+          "n_wl": 1.2044,
+          "n_peak": 4.8766,
+          "wamp": 0.842,
+          "fmd": 152.0,
+          "fmn": 149.0,
+          "b1_ratio": 0.0717,
+          "b2_ratio": 0.4123,
+          "b3_ratio": 0.516,
+          "ar1": 0.3519,
+          "ar2": 0.3513,
+          "ar3": 0.1221,
+          "ar4": 0.1014
         },
         "flex": {
-          "rms": 23.074,
-          "mav": 13.47,
-          "var": 532.378,
-          "peak": 158.455,
-          "wl": 13.117,
-          "zcr": 0.2965
+          "rms": 34.83,
+          "mav": 21.769,
+          "var": 1213.158,
+          "peak": 290.184,
+          "wl": 28.383,
+          "zcr": 0.479,
+          "n_wl": 0.8149,
+          "n_peak": 8.3313,
+          "wamp": 0.6365,
+          "fmd": 96.0,
+          "fmn": 107.72,
+          "b1_ratio": 0.1883,
+          "b2_ratio": 0.5843,
+          "b3_ratio": 0.2274,
+          "ar1": -0.1781,
+          "ar2": 0.3676,
+          "ar3": 0.0734,
+          "ar4": 0.2509
         }
       },
       "recordings": {
-        "relax": "subject_03_relax_20261021_012245.csv",
-        "clench": "subject_03_clench_20261021_012245.csv",
-        "flex": "subject_03_flex_20261021_012245.csv"
-      }
-    },
-    "subject_04": {
-      "name": "Anusha",
-      "role": "owner",
-      "enrolled_at": "2026-10-22T15:43:16Z",
-      "features": {
-        "relax": {
-          "rms": 1.991,
-          "mav": 1.434,
-          "var": 3.964,
-          "peak": 15.983,
-          "wl": 1.137,
-          "zcr": 0.282
-        },
-        "clench": {
-          "rms": 23.498,
-          "mav": 14.724,
-          "var": 552.17,
-          "peak": 136.6,
-          "wl": 14.45,
-          "zcr": 0.2965
-        },
-        "flex": {
-          "rms": 3.558,
-          "mav": 2.634,
-          "var": 12.659,
-          "peak": 23.878,
-          "wl": 2.297,
-          "zcr": 0.2945
-        }
+        "relax": "subject_03_relax_20261023_160337.csv",
+        "clench": "subject_03_clench_20261023_160337.csv",
+        "flex": "subject_03_flex_20261023_160337.csv"
       },
-      "recordings": {
-        "relax": "subject_04_relax_20261022_154316.csv",
-        "clench": "subject_04_clench_20261022_154316.csv",
-        "flex": "subject_04_flex_20261022_154316.csv"
-      }
-    },
-    "subject_05": {
-      "name": "AShoka SIg",
-      "role": "owner",
-      "enrolled_at": "2026-10-23T00:11:52Z",
-      "features": {
-        "relax": {
-          "rms": 2.901,
-          "mav": 2.151,
-          "var": 8.416,
-          "peak": 15.726,
-          "wl": 2.008,
-          "zcr": 0.3035
-        },
-        "clench": {
-          "rms": 38.51,
-          "mav": 25.554,
-          "var": 1929.853,
-          "peak": 227.829,
-          "wl": 22.935,
-          "zcr": 0.304
-        },
-        "flex": {
-          "rms": 2.345,
-          "mav": 1.812,
-          "var": 5.499,
-          "peak": 11.068,
-          "wl": 1.75,
-          "zcr": 0.3255
-        }
-      },
-      "recordings": {
-        "relax": "subject_05_relax_20261023_001152.csv",
-        "clench": "subject_05_clench_20261023_001639.csv",
-        "flex": "subject_05_flex_20261023_001152.csv"
-      },
-      "trials_count": 10,
-      "last_updated": "2026-10-23T00:16:39Z"
+      "trials_count": 1
     }
   }
 }

@@ -1,8 +1,10 @@
 {
-  "owner_id": "subject_05",
-  "owner_name": "AShoka SIg",
-  "distance_threshold": 6.964351435242458,
-  "confidence_threshold": 75.0,
-  "calibrated_at": "2026-10-23T00:28:55Z",
-  "eer_estimate": 4.2
+  "owner_id": "subject_02",
+  "owner_name": "Ashoka",
+  "bio_threshold": 1.95,
+  "cadence_threshold": 0.08,
+  "confidence_threshold": 50.0,
+  "master_fmd": 126.0,
+  "calibrated_at": "2026-10-23T16:17:20Z",
+  "eer_estimate": 1.8
 }

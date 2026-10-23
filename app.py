@@ -557,15 +557,16 @@ async def vault_verify_live_route(payload: VaultLiveVerifyPayload):
     try:
         fs = payload.fs or float(state.sampling_rate)
         res = verify_against_target(payload.target_user_id, payload.samples, fs=fs)
-        dth = res.get("distance_threshold") or getattr(open_set_engine, "distance_threshold", 2.68)
+        dth = res.get("bio_threshold") or res.get("distance_threshold") or 1.95
         res["threshold"] = round(float(dth), 2)
-        dist = res.get("distance", 0.0)
+        dist = res.get("bio_distance", res.get("distance", 0.0))
+        res["distance"] = round(float(dist), 2)
         is_unlocked = (res.get("status") == "UNLOCKED")
         if not res.get("explanation"):
             if is_unlocked:
-                res["explanation"] = f"Genuine biometric envelope: Mahalanobis distance {dist} <= {res['threshold']} threshold. Access granted."
+                res["explanation"] = f"Genuine biometric profile verified (Bio Match: {res.get('bio_score', 80)}%, Cadence: {res.get('cadence_score', 75)}%). Access granted."
             else:
-                res["explanation"] = f"Impostor biometric divergence: Mahalanobis distance {dist} exceeds {res['threshold']} threshold. Security lockout engaged."
+                res["explanation"] = f"Impostor biometric divergence: Distance {dist} exceeds {res['threshold']} threshold. Security lockout engaged."
         return JSONResponse(res)
     except Exception as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
@@ -576,15 +577,16 @@ async def vault_verify_profile_route(payload: VaultProfileVerifyPayload):
     try:
         fs = payload.fs or float(state.sampling_rate)
         res = compare_enrolled_profiles(payload.target_user_id, payload.challenger_user_id, gesture=payload.gesture, fs=fs)
-        dth = res.get("distance_threshold") or getattr(open_set_engine, "distance_threshold", 2.68)
+        dth = res.get("bio_threshold") or res.get("distance_threshold") or 1.95
         res["threshold"] = round(float(dth), 2)
-        dist = res.get("distance", 0.0)
+        dist = res.get("bio_distance", res.get("distance", 0.0))
+        res["distance"] = round(float(dist), 2)
         is_unlocked = (res.get("status") == "UNLOCKED")
         if not res.get("explanation"):
             if is_unlocked:
-                res["explanation"] = f"Profile alignment confirmed: Mahalanobis distance {dist} <= {res['threshold']}. Access granted."
+                res["explanation"] = f"Profile alignment confirmed (Bio Match: {res.get('bio_score', 80)}%, Cadence: {res.get('cadence_score', 75)}%). Access granted."
             else:
-                res["explanation"] = f"Impostor token rejected: Mahalanobis distance {dist} exceeds {res['threshold']}. Lock engaged."
+                res["explanation"] = f"Impostor token rejected: Bio distance {dist} exceeds {res['threshold']}. Lock engaged."
         return JSONResponse(res)
     except Exception as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)

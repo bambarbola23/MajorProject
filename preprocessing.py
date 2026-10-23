@@ -38,14 +38,20 @@ def preprocess_eeg(raw_eeg, fs=250.0):
     
     return signal_filtered
 
-def preprocess_emg(raw_emg, fs=250.0):
+def preprocess_emg(raw_emg, fs=250.0, highcut=None):
     """Preprocesses raw EMG: removes DC offset, applies 50Hz notch, and bandpass filter."""
+    if len(raw_emg) < 15:
+        return np.array(raw_emg, dtype=float)
     signal = np.array(raw_emg, dtype=float) - np.mean(raw_emg)
     signal_notched = apply_notch_filter(signal, fs=fs, notch_freq=50.0)
     
     # Bound highcut to below Nyquist frequency
     nyquist = 0.5 * fs
-    highcut = min(120.0, nyquist * 0.95)
-    signal_filtered = apply_butterworth_filter(signal_notched, lowcut=10.0, highcut=highcut, fs=fs)
+    if highcut is None:
+        highcut = min(240.0, nyquist * 0.95)
+    else:
+        highcut = min(highcut, nyquist * 0.95)
+    lowcut = 10.0
+    signal_filtered = apply_butterworth_filter(signal_notched, lowcut=lowcut, highcut=highcut, fs=fs)
     
     return signal_filtered

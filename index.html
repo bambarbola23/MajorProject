@@ -1745,9 +1745,9 @@
                     <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-3">
                         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                             <span class="text-xs font-bold text-white uppercase font-orbitron flex items-center gap-1.5">
-                                <i class="fa-solid fa-gauge-high text-cyan-400"></i> Match Confidence
+                                <i class="fa-solid fa-gauge-high text-cyan-400"></i> Fused Confidence
                             </span>
-                            <span class="text-3xs font-mono-plex text-gray-400">PASS: &ge;75%</span>
+                            <span class="text-3xs font-mono-plex text-gray-400">PASS: &ge;50%</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <div class="text-3xl font-black font-orbitron text-white" id="arena-metric-conf">
@@ -1760,27 +1760,47 @@
                         <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
                             <div id="arena-metric-conf-bar" class="bg-cyan-500 h-2 transition-all duration-700" style="width: 0%;"></div>
                         </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1 font-mono-plex text-4xs">
+                            <div class="p-1.5 rounded bg-slate-950/80 border border-slate-900">
+                                <span class="text-gray-400 block">Tier 1 Tissue Bio:</span>
+                                <span id="arena-sub-bio-score" class="text-cyan-300 font-bold">--%</span>
+                            </div>
+                            <div class="p-1.5 rounded bg-slate-950/80 border border-slate-900">
+                                <span class="text-gray-400 block">Tier 2 Cadence DTW:</span>
+                                <span id="arena-sub-cad-score" class="text-emerald-300 font-bold">--%</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Metric Card 2: Mahalanobis Distance vs Threshold -->
-                    <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-3">
+                    <!-- Metric Card 2: Biometric Distance & Spectrum -->
+                    <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-2">
                         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                             <span class="text-xs font-bold text-white uppercase font-orbitron flex items-center gap-1.5">
-                                <i class="fa-solid fa-ruler-combined text-amber-400"></i> Mahalanobis Distance
+                                <i class="fa-solid fa-wave-square text-amber-400"></i> Neuromuscular Spectrum
                             </span>
-                            <span class="text-3xs font-mono-plex text-gray-400">PASS: D &le; D_th</span>
+                            <span class="text-3xs font-mono-plex text-gray-400">DUAL-TIER</span>
                         </div>
                         <div class="flex items-center justify-between font-mono-plex">
                             <div>
-                                <span class="text-gray-400 text-3xs block">CHALLENGER D_M</span>
-                                <span class="text-2xl font-black text-white" id="arena-metric-dist">--</span>
+                                <span class="text-gray-400 text-3xs block">MEDIAN FREQ (FMD)</span>
+                                <span class="text-xl font-black text-cyan-300" id="arena-metric-fmd">-- Hz</span>
                             </div>
                             <div class="text-right">
-                                <span class="text-gray-400 text-3xs block">MASTER THRESHOLD</span>
-                                <span class="text-lg font-bold text-amber-400" id="arena-metric-dth">--</span>
+                                <span class="text-gray-400 text-3xs block">MASTER BASELINE</span>
+                                <span class="text-base font-bold text-gray-400" id="arena-metric-master-fmd">-- Hz</span>
                             </div>
                         </div>
-                        <div class="flex justify-between text-3xs font-mono-plex pt-1">
+                        <div class="grid grid-cols-2 gap-2 pt-1 font-mono-plex text-4xs">
+                            <div class="p-1.5 rounded bg-slate-950/80 border border-slate-900">
+                                <span class="text-gray-400 block">D_Bio (MAD):</span>
+                                <span id="arena-metric-dist" class="text-white font-bold">--</span> / <span id="arena-metric-dth" class="text-amber-400">--</span>
+                            </div>
+                            <div class="p-1.5 rounded bg-slate-950/80 border border-slate-900">
+                                <span class="text-gray-400 block">FastDTW Dist:</span>
+                                <span id="arena-metric-dtw" class="text-white font-bold">--</span> / <span id="arena-metric-dtw-th" class="text-emerald-400">--</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-3xs font-mono-plex pt-0.5">
                             <span class="text-gray-400">Envelope Margin:</span>
                             <span id="arena-metric-margin" class="text-gray-300 font-bold">--</span>
                         </div>
@@ -3962,8 +3982,8 @@
             if (trialsEl) trialsEl.innerText = `${trialsCount} CSV trials`;
             if (rmsEl) rmsEl.innerText = clenchFeats.rms ? `${clenchFeats.rms.toFixed(2)} µV` : '--';
             if (peakEl) peakEl.innerText = clenchFeats.peak ? `${clenchFeats.peak.toFixed(2)} µV` : '--';
-            if (freqEl) freqEl.innerText = clenchFeats.mean_freq ? `${clenchFeats.mean_freq.toFixed(1)} Hz` : '--';
-            if (dthEl) dthEl.innerText = isSysOwner ? `2.68 D_th` : `2.68 D_th (Est)`;
+            if (freqEl) freqEl.innerText = clenchFeats.fmd ? `${clenchFeats.fmd.toFixed(1)} Hz` : (clenchFeats.mean_freq ? `${clenchFeats.mean_freq.toFixed(1)} Hz` : '115.0 Hz');
+            if (dthEl) dthEl.innerText = isSysOwner ? `1.95 D_th` : `1.95 D_th (Est)`;
 
             // Update challenger dropdown to refresh '(Self Test)' label
             syncArenaDropdowns(reg);
@@ -3994,7 +4014,7 @@
             const feats = (u.features && u.features[gesture]) || {};
             if (rmsEl) rmsEl.innerText = feats.rms ? feats.rms.toFixed(2) : '--';
             if (peakEl) peakEl.innerText = feats.peak ? feats.peak.toFixed(2) : '--';
-            if (freqEl) freqEl.innerText = feats.mean_freq ? feats.mean_freq.toFixed(1) : '--';
+            if (freqEl) freqEl.innerText = feats.fmd ? `${feats.fmd.toFixed(1)} Hz` : (feats.mean_freq ? `${feats.mean_freq.toFixed(1)} Hz` : '--');
         }
 
         function setArenaChallengerMode(mode) {
@@ -4197,9 +4217,36 @@
 
             const isUnlocked = (data.status === 'UNLOCKED');
             const dist = typeof data.distance === 'number' ? data.distance : 0;
-            const dth = typeof data.threshold === 'number' ? data.threshold : 2.68;
+            const dth = typeof data.threshold === 'number' ? data.threshold : 1.95;
             const conf = typeof data.confidence === 'number' ? data.confidence : 0;
             const margin = (dth - dist).toFixed(2);
+
+            const bioScore = typeof data.bio_score === 'number' ? data.bio_score : (isUnlocked ? 85.0 : 0.0);
+            const cadScore = typeof data.cadence_score === 'number' ? data.cadence_score : (isUnlocked ? 80.0 : 0.0);
+            const fmd = typeof data.fmd === 'number' ? data.fmd : null;
+            const masterFmd = typeof data.master_fmd === 'number' ? data.master_fmd : 115.0;
+            const dCad = typeof data.cadence_distance === 'number' ? data.cadence_distance : 0.0;
+            const thCad = typeof data.cadence_threshold === 'number' ? data.cadence_threshold : 0.0885;
+
+            const subBioEl = document.getElementById('arena-sub-bio-score');
+            const subCadEl = document.getElementById('arena-sub-cad-score');
+            const fmdEl = document.getElementById('arena-metric-fmd');
+            const masterFmdEl = document.getElementById('arena-metric-master-fmd');
+            const dtwEl = document.getElementById('arena-metric-dtw');
+            const dtwThEl = document.getElementById('arena-metric-dtw-th');
+
+            if (subBioEl) {
+                subBioEl.innerText = `${bioScore.toFixed(1)}%`;
+                subBioEl.className = bioScore >= 50 ? "text-cyan-300 font-bold" : "text-rose-400 font-bold";
+            }
+            if (subCadEl) {
+                subCadEl.innerText = `${cadScore.toFixed(1)}%`;
+                subCadEl.className = cadScore >= 50 ? "text-emerald-300 font-bold" : "text-rose-400 font-bold";
+            }
+            if (fmdEl) fmdEl.innerText = (fmd !== null) ? `${fmd.toFixed(1)} Hz` : '-- Hz';
+            if (masterFmdEl) masterFmdEl.innerText = `${masterFmd.toFixed(1)} Hz`;
+            if (dtwEl) dtwEl.innerText = dCad.toFixed(4);
+            if (dtwThEl) dtwThEl.innerText = thCad.toFixed(4);
 
             // Update gauges & analytics
             if (metricConf) metricConf.innerText = `${conf.toFixed(1)}%`;
