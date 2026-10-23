@@ -209,9 +209,42 @@ class OpenSetBiometricVerifier:
                 jitter = np.random.normal(1.0, 0.05, len(v))
                 owner_vectors.append(v * jitter)
                 
+        # Also sample directly from any real CSV recordings saved for this owner
+        if os.path.exists(RAW_RECORDINGS_DIR):
+            for rfile in os.listdir(RAW_RECORDINGS_DIR):
+                if rfile.startswith(f"{self.owner_id}_clench_") and rfile.endswith(".csv"):
+                    try:
+                        rdf = pd.read_csv(os.path.join(RAW_RECORDINGS_DIR, rfile))
+                        if "emg_raw" in rdf.columns:
+                            raw_pts = rdf["emg_raw"].tolist()
+                            if len(raw_pts) >= 200:
+                                for s in range(0, len(raw_pts) - 250, 100):
+                                    win = raw_pts[s:s+250]
+                                    f = extract_open_set_features(win, fs=500.0)
+                                    owner_vectors.append(feature_dict_to_vector(f))
+                    except Exception as err:
+                        print(f"Error reading owner recording {rfile}: {err}")
+                
         # Also sample from master_raw_dataset if available
         master_csv = os.path.join(BASE_DIR, "dataset", "master_raw_dataset.csv")
         impostor_vectors = []
+        
+        # Sample real recordings of other enrolled users as genuine negative samples
+        for uid, uinfo in registry.get("users", {}).items():
+            if uid != self.owner_id:
+                for g, rfname in uinfo.get("recordings", {}).items():
+                    if g in ["clench", "flex"]:
+                        rpath = os.path.join(RAW_RECORDINGS_DIR, rfname)
+                        if os.path.exists(rpath):
+                            try:
+                                odf = pd.read_csv(rpath)
+                                if "emg_raw" in odf.columns:
+                                    pts = odf["emg_raw"].tolist()
+                                    for s in range(0, len(pts) - 250, 125):
+                                        f = extract_open_set_features(pts[s:s+250], fs=500.0)
+                                        impostor_vectors.append(feature_dict_to_vector(f))
+                            except Exception:
+                                pass
         if os.path.exists(master_csv):
             try:
                 df = pd.read_csv(master_csv)
@@ -399,3 +432,249 @@ open_set_engine = OpenSetBiometricVerifier()
 if not open_set_engine.load():
     seed_default_baseline_if_needed()
     open_set_engine.calibrate("subject_01")
+
+# ----------------- PROFILE MANAGEMENT & TARGET VERIFICATION API -----------------
+
+def delete_user_profile(user_id: str) -> Dict[str, Any]:
+    """Deletes an enrolled user profile and all associated raw recording files."""
+    registry = get_registry()
+    users = registry.get("users", {})
+    if user_id not in users:
+        return {"status": "error", "message": f"User '{user_id}' not found in registry."}
+    
+    # 1. Delete user's recording files from RAW_RECORDINGS_DIR
+    deleted_files = []
+    try:
+        user_recordings = users[user_id].get("recordings", {})
+        for g, fname in user_recordings.items():
+            fpath = os.path.join(RAW_RECORDINGS_DIR, fname)
+            if os.path.exists(fpath):
+                try:
+                    os.remove(fpath)
+                    deleted_files.append(fname)
+                except Exception:
+                    pass
+        # Also clean any extra trial CSVs for this user_id
+        if os.path.exists(RAW_RECORDINGS_DIR):
+            for f in os.listdir(RAW_RECORDINGS_DIR):
+                if f.startswith(f"{user_id}_") and f.endswith(".csv"):
+                    extra_path = os.path.join(RAW_RECORDINGS_DIR, f)
+                    if os.path.exists(extra_path) and f not in deleted_files:
+                        try:
+                            os.remove(extra_path)
+                            deleted_files.append(f)
+                        except Exception:
+                            pass
+    except Exception as e:
+        print(f"Error removing recording files for {user_id}: {e}")
+        
+    # 2. Remove from registry
+    deleted_name = users[user_id].get("name", user_id)
+    del users[user_id]
+    
+    # 3. Handle owner reassignment if the deleted user was the active master
+    new_owner = None
+    if registry.get("owner_id") == user_id:
+        remaining_ids = list(users.keys())
+        if remaining_ids:
+            new_owner = remaining_ids[0]
+            registry["owner_id"] = new_owner
+            users[new_owner]["role"] = "owner"
+            open_set_engine.calibrate(new_owner)
+        else:
+            registry["owner_id"] = None
+            seed_default_baseline_if_needed()
+            registry = get_registry()
+            new_owner = registry.get("owner_id")
+            open_set_engine.calibrate(new_owner)
+            
+    save_registry(registry)
+    return {
+        "status": "success",
+        "message": f"User '{deleted_name}' ({user_id}) deleted successfully.",
+        "deleted_files": deleted_files,
+        "active_owner": registry.get("owner_id")
+    }
+
+def set_active_owner(user_id: str) -> Dict[str, Any]:
+    """Switches the active Master Key to a specified enrolled user and recalibrates the decision model."""
+    registry = get_registry()
+    users = registry.get("users", {})
+    if user_id not in users:
+        return {"status": "error", "message": f"User '{user_id}' does not exist in registry."}
+        
+    # Update roles in registry
+    for uid, udata in users.items():
+        if uid == user_id:
+            udata["role"] = "owner"
+        elif udata.get("role") == "owner":
+            udata["role"] = "visitor"
+            
+    registry["owner_id"] = user_id
+    save_registry(registry)
+    
+    # Recalibrate open-set boundary for this owner
+    calib = open_set_engine.calibrate(user_id)
+    return {
+        "status": "success",
+        "message": f"User '{users[user_id].get('name', user_id)}' is now the Master Key!",
+        "owner_id": user_id,
+        "owner_name": users[user_id].get("name", user_id),
+        "calibration": calib
+    }
+
+def append_user_trial(user_id: str, gesture: str, samples: List[int], fs: float = 500.0) -> Dict[str, Any]:
+    """Appends an additional trial recording to enrich an existing user profile."""
+    registry = get_registry()
+    users = registry.get("users", {})
+    if user_id not in users:
+        return {"status": "error", "message": f"User '{user_id}' not found."}
+        
+    timestamp_str = time.strftime("%Y%m%d_%H%M%S")
+    csv_filename = f"{user_id}_{gesture}_{timestamp_str}.csv"
+    csv_path = os.path.join(RAW_RECORDINGS_DIR, csv_filename)
+    
+    df = pd.DataFrame({
+        "timestamp_ms": [int(i * (1000.0 / fs)) for i in range(len(samples))],
+        "emg_raw": samples,
+        "gesture": gesture
+    })
+    df.to_csv(csv_path, index=False)
+    
+    # Extract features for this trial
+    new_feats = extract_open_set_features(samples, fs=fs)
+    
+    # Update feature baseline (moving average with previous for stability)
+    current_feats = users[user_id].get("features", {}).get(gesture)
+    if current_feats:
+        smoothed_feats = {}
+        for k in FEATURE_NAMES:
+            smoothed_feats[k] = round(float(0.6 * new_feats[k] + 0.4 * current_feats.get(k, new_feats[k])), 3)
+        users[user_id]["features"][gesture] = smoothed_feats
+    else:
+        users[user_id].setdefault("features", {})[gesture] = new_feats
+        
+    cur_count = users[user_id].get("trials_count", 1) + 1
+    users[user_id]["trials_count"] = cur_count
+    users[user_id].setdefault("recordings", {})[gesture] = csv_filename
+    users[user_id]["last_updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    
+    # If this is the active owner, recalibrate model with the enriched trials
+    if registry.get("owner_id") == user_id:
+        open_set_engine.calibrate(user_id)
+        
+    save_registry(registry)
+    return {
+        "status": "success",
+        "message": f"Appended new {gesture} trial for '{users[user_id].get('name', user_id)}'.",
+        "user_id": user_id,
+        "gesture": gesture,
+        "trials_count": cur_count,
+        "features": users[user_id]["features"][gesture],
+        "recording_file": csv_filename
+    }
+
+def verify_against_target(target_user_id: str, candidate_samples: List[int], fs: float = 500.0) -> Dict[str, Any]:
+    """Evaluates candidate samples against a specific target master user (even if not the globally active owner)."""
+    registry = get_registry()
+    users = registry.get("users", {})
+    if target_user_id not in users:
+        return {"status": "error", "message": f"Target master '{target_user_id}' not found in registry."}
+        
+    # If the target is the currently loaded model owner, use fast calibrated engine directly
+    if target_user_id == open_set_engine.owner_id:
+        res = open_set_engine.verify(candidate_samples, fs=fs)
+        res["target_user_id"] = target_user_id
+        res["target_user_name"] = open_set_engine.owner_name
+        return res
+        
+    # Otherwise, compute on-the-fly against target user's stored features
+    target_data = users[target_user_id]
+    target_clench = target_data.get("features", {}).get("clench") or target_data.get("features", {}).get("flex")
+    if not target_clench:
+        return {"status": "error", "message": f"Target user '{target_user_id}' has no clench/flex tokens recorded."}
+        
+    target_vec = feature_dict_to_vector(target_clench)
+    cand_feats = extract_open_set_features(candidate_samples, fs=fs)
+    cand_vec = feature_dict_to_vector(cand_feats)
+    
+    # Compute relative weighted deviation
+    rel_diff = np.abs(cand_vec - target_vec) / np.maximum(np.abs(target_vec), 1e-3)
+    weighted_sq = (rel_diff * open_set_engine.feature_weights) ** 2
+    dist = float(np.sqrt(np.sum(weighted_sq) / np.sum(open_set_engine.feature_weights)))
+    
+    thresh = float(open_set_engine.distance_threshold) if open_set_engine.distance_threshold else 2.45
+    conf = round(float(max(5.0, min(99.4, 100.0 * np.exp(-0.5 * (dist / max(0.5, thresh * 0.75))**2)))), 1)
+    is_auth = (conf >= 75.0 and dist <= thresh * 1.35)
+    
+    return {
+        "status": "UNLOCKED" if is_auth else "LOCKED",
+        "is_authorized": is_auth,
+        "confidence": conf,
+        "distance": round(dist, 2),
+        "distance_threshold": round(thresh, 2),
+        "target_user_id": target_user_id,
+        "target_user_name": target_data.get("name", target_user_id),
+        "target_features": target_clench,
+        "candidate_features": cand_feats
+    }
+
+def compare_enrolled_profiles(target_user_id: str, challenger_user_id: str, gesture: str = "clench", fs: float = 500.0) -> Dict[str, Any]:
+    """Compares two stored enrolled user profiles from disk."""
+    registry = get_registry()
+    users = registry.get("users", {})
+    if target_user_id not in users:
+        return {"status": "error", "message": f"Target master '{target_user_id}' not found."}
+    if challenger_user_id not in users:
+        return {"status": "error", "message": f"Challenger '{challenger_user_id}' not found."}
+        
+    t_data = users[target_user_id]
+    c_data = users[challenger_user_id]
+    
+    # Check if challenger has raw recording CSV to test
+    c_rec = c_data.get("recordings", {}).get(gesture)
+    samples = []
+    if c_rec:
+        c_path = os.path.join(RAW_RECORDINGS_DIR, c_rec)
+        if os.path.exists(c_path):
+            try:
+                cdf = pd.read_csv(c_path)
+                if "emg_raw" in cdf.columns:
+                    samples = cdf["emg_raw"].tolist()
+            except Exception as e:
+                print(f"Error reading challenger CSV: {e}")
+                
+    if samples and len(samples) >= 20:
+        verif = verify_against_target(target_user_id, samples, fs=fs)
+    else:
+        # Fallback to feature vector comparison
+        t_feats = t_data.get("features", {}).get(gesture, {})
+        c_feats = c_data.get("features", {}).get(gesture, {})
+        if not t_feats or not c_feats:
+            return {"status": "error", "message": f"Gesture '{gesture}' not found in both profiles."}
+            
+        t_vec = feature_dict_to_vector(t_feats)
+        c_vec = feature_dict_to_vector(c_feats)
+        rel_diff = np.abs(c_vec - t_vec) / np.maximum(np.abs(t_vec), 1e-3)
+        weighted_sq = (rel_diff * open_set_engine.feature_weights) ** 2
+        dist = float(np.sqrt(np.sum(weighted_sq) / np.sum(open_set_engine.feature_weights)))
+        thresh = float(open_set_engine.distance_threshold) if open_set_engine.distance_threshold else 2.45
+        conf = round(float(max(5.0, min(99.4, 100.0 * np.exp(-0.5 * (dist / max(0.5, thresh * 0.75))**2)))), 1)
+        is_auth = (conf >= 75.0 and dist <= thresh * 1.35)
+        verif = {
+            "status": "UNLOCKED" if is_auth else "LOCKED",
+            "is_authorized": is_auth,
+            "confidence": conf,
+            "distance": round(dist, 2),
+            "distance_threshold": round(thresh, 2),
+            "target_user_id": target_user_id,
+            "target_user_name": t_data.get("name", target_user_id),
+            "target_features": t_feats,
+            "candidate_features": c_feats
+        }
+        
+    verif["challenger_user_id"] = challenger_user_id
+    verif["challenger_user_name"] = c_data.get("name", challenger_user_id)
+    verif["gesture"] = gesture
+    return verif
+

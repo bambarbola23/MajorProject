@@ -122,8 +122,20 @@ Single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Proje
 * **Web Audio API Synth Engine:** Generates ascending major electronic chord ($\text{C}_5 \to \text{E}_5 \to \text{G}_5 \to \text{C}_6$) for `VAULT UNLOCKED` and dual low-frequency sawtooth buzz ($140\text{ Hz} \to 90\text{ Hz}$) for `SECURITY LOCKOUT`. Zero external MP3 files.
 * **Visualizer Channel:** 60 FPS oscilloscope, hardware gain multipliers ($0.5\times$ to $8\times$), sweep timebases ($1\text{s}$, $2\text{s}$, $4\text{s}$), DC auto-centering, envelope follower, and LED VU meter.
 * **Dual-Person EMG Studio:** 6-step guided comparative protocol comparing Person 1 vs Person 2 across Relax, Clench, Flex with comparative waveforms and dissimilarity scoring.
-* **Stage 3 Biometric Gate:** Live hardware challenge evaluating real-time 3.0s muscle contractions against `/api/verify_biometric_token`.
-* **Biometric Enrollment Studio:** Full 4.0s guided capture hub for Relax, Clench, Flex, saving directly to CSV and persisting to `registry.json`.
+* **Biometric Vault & Lock/Unlock Arena (NEW):**
+  - **Explicit Target Master Selection:** Transparently select which enrolled master (e.g., `subject_02`, `subject_01`) represents the lock target. Displays baseline RMS, Peak, Mean Frequency, and Mahalanobis $D_{\text{th}}$.
+  - **Dual Challenger Modes:**
+    - *Live Hardware Arm (Arduino COM3):* 3.0s real-time muscle squeeze challenge against chosen master (`POST /api/vault/verify_live`).
+    - *Stored Profile Confrontation:* 1-on-1 direct profile confrontation using stored tokens of another enrolled user (`POST /api/vault/verify_profile`).
+  - **Animated Cyber-Vault Blast Door:** Hydraulic blast door graphics that slide open (`ACCESS GRANTED`) or clamp shut with red strobe alarm (`SECURITY LOCKOUT`) with Web Audio API feedback.
+  - **Analytical Gauges & Metrics:** Real-time Match Confidence gauge, Mahalanobis Distance vs Threshold meter, variance delta breakdown, and session audit log.
+* **Envelope Enrichment & Trial Appending (NEW):**
+  - Dedicated Append Trial panel allowing users to record additional 4.0s contraction trials (`POST /api/append_trial`).
+  - Refines the biometric envelope via exponential moving average ($0.6 \text{ new} + 0.4 \text{ old}$) and recalibrates open-set boundaries if the target is the active master.
+* **Full Profile Registry CRUD (NEW):**
+  - **Set as Master:** Promote any enrolled user to global system owner (`POST /api/set_active_owner`) with instant model recalibration.
+  - **Append Trial:** Quick-launch trial recorder from table row.
+  - **Delete Profile:** Purge profile from `registry.json` and delete its CSV recordings (`DELETE /api/users/{user_id}`).
 
 ---
 
@@ -131,16 +143,16 @@ Single-page cybernetic dashboard in [`index.html`](file:///d:/BCI-BCI/HBCI-Proje
 
 ```
 d:\BCI-BCI\HBCI-Project-2k26-\
-├── app.py                            # FastAPI server, WebSocket streamer, serial daemon (COM3)
-├── index.html                        # Integrated Dashboard UI, visualizers, enrollment studio
+├── app.py                            # FastAPI server, WebSocket streamer, serial daemon (COM3), Vault & CRUD APIs
+├── index.html                        # Integrated Dashboard UI, visualizers, enrollment studio, Vault Arena
 ├── preprocessing.py                  # SciPy Notch (50Hz) and Bandpass (10-120Hz) filters
 ├── dataset/
 │   ├── master_raw_dataset.csv        # Baseline dataset (320,000 rows, Subjects 1-10)
 │   └── enrolled_users/
 │       ├── registry.json             # ACTIVE: Contains subject_01 and subject_02 ("ashoka right")
-│       └── raw_recordings/           # ACTIVE: Real CSV trials (9 files for subject_02 @ 500Hz)
+│       └── raw_recordings/           # ACTIVE: Real CSV trials for enrolled users @ 500Hz
 ├── ml_pipeline/
-│   ├── open_set_engine.py            # Active Open-Set Verifier, Mahalanobis metric, DecisionTree
+│   ├── open_set_engine.py            # Active Open-Set Verifier, Mahalanobis metric, CRUD & Vault logic
 │   ├── record_data.py                # Standalone CLI serial recorder
 │   └── train_model.py                # Multi-class baseline classifier
 ├── models/
@@ -162,7 +174,25 @@ d:\BCI-BCI\HBCI-Project-2k26-\
 
 ---
 
-## 9. How to Run & Verify
+## 9. API Surface (Current Endpoints)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Serves the main cybernetic dashboard (`index.html`) |
+| `GET` | `/api/enrolled_users` | Retrieves the active user registry from `registry.json` |
+| `POST` | `/api/enroll_user` | Enrolls a new user with 3 guided tokens (Relax, Clench, Flex) |
+| `POST` | `/api/append_trial` | Appends a new 4.0s contraction trial to refine a profile envelope |
+| `POST` | `/api/set_active_owner` | Reassigns the active master key and recalibrates open-set model |
+| `DELETE` | `/api/users/{user_id}` | Purges a profile and deletes associated raw recordings |
+| `POST` | `/api/vault/verify_live` | Evaluates live candidate EMG stream against any chosen target master |
+| `POST` | `/api/vault/verify_profile`| Evaluates stored token of candidate user against any chosen target master |
+| `POST` | `/api/verify_biometric_token` | Evaluates live token against active system owner |
+| `POST` | `/api/calibrate_open_set` | Triggers empirical calibration of decision boundary |
+| `WS` | `/ws/eeg` | Real-time 60 FPS live telemetry and sensor streaming |
+
+---
+
+## 10. How to Run & Verify
 
 1. **Launch Server:**
    ```powershell
@@ -176,4 +206,8 @@ d:\BCI-BCI\HBCI-Project-2k26-\
    **Output:**
    ```
    Active Owner: ashoka right | Threshold: 2.6819688458143123
+   ```
+4. **Test Target Master Vault Comparison:**
+   ```powershell
+   python -c "from ml_pipeline.open_set_engine import compare_enrolled_profiles; print(compare_enrolled_profiles('subject_02', 'subject_01', 'clench'))"
    ```

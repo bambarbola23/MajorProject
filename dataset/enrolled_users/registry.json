@@ -1,6 +1,6 @@
 {
   "created_at": "2026-10-14T12:17:18Z",
-  "owner_id": "subject_02",
+  "owner_id": "subject_05",
   "users": {
     "subject_01": {
       "name": "Exhibitor (Master Key)",
@@ -39,40 +39,150 @@
       }
     },
     "subject_02": {
-      "name": "ashoka right",
+      "name": "Ashoka smooth",
       "role": "owner",
-      "enrolled_at": "2026-10-17T18:19:46Z",
+      "enrolled_at": "2026-10-21T01:20:48Z",
       "features": {
         "relax": {
-          "rms": 1.56,
-          "mav": 1.176,
-          "var": 2.432,
-          "peak": 6.764,
-          "wl": 1.059,
-          "zcr": 0.2895
+          "rms": 1.259,
+          "mav": 0.989,
+          "var": 1.584,
+          "peak": 5.336,
+          "wl": 0.856,
+          "zcr": 0.29
         },
         "clench": {
-          "rms": 13.157,
-          "mav": 9.174,
-          "var": 173.096,
-          "peak": 67.368,
-          "wl": 8.808,
-          "zcr": 0.312
+          "rms": 2.715,
+          "mav": 1.872,
+          "var": 7.373,
+          "peak": 15.74,
+          "wl": 1.68,
+          "zcr": 0.293
         },
         "flex": {
-          "rms": 49.496,
-          "mav": 27.109,
-          "var": 2449.88,
-          "peak": 283.991,
-          "wl": 25.117,
-          "zcr": 0.3045
+          "rms": 6.041,
+          "mav": 3.958,
+          "var": 36.492,
+          "peak": 46.338,
+          "wl": 3.682,
+          "zcr": 0.299
         }
       },
       "recordings": {
-        "relax": "subject_02_relax_20261017_181946.csv",
-        "clench": "subject_02_clench_20261017_181946.csv",
-        "flex": "subject_02_flex_20261017_181946.csv"
+        "relax": "subject_02_relax_20261021_012048.csv",
+        "clench": "subject_02_clench_20261021_012048.csv",
+        "flex": "subject_02_flex_20261021_012048.csv"
       }
+    },
+    "subject_03": {
+      "name": "Ashoka hardr",
+      "role": "owner",
+      "enrolled_at": "2026-10-21T01:22:45Z",
+      "features": {
+        "relax": {
+          "rms": 2.189,
+          "mav": 1.642,
+          "var": 4.793,
+          "peak": 12.184,
+          "wl": 1.439,
+          "zcr": 0.292
+        },
+        "clench": {
+          "rms": 19.892,
+          "mav": 10.324,
+          "var": 395.698,
+          "peak": 175.659,
+          "wl": 9.977,
+          "zcr": 0.3
+        },
+        "flex": {
+          "rms": 23.074,
+          "mav": 13.47,
+          "var": 532.378,
+          "peak": 158.455,
+          "wl": 13.117,
+          "zcr": 0.2965
+        }
+      },
+      "recordings": {
+        "relax": "subject_03_relax_20261021_012245.csv",
+        "clench": "subject_03_clench_20261021_012245.csv",
+        "flex": "subject_03_flex_20261021_012245.csv"
+      }
+    },
+    "subject_04": {
+      "name": "Anusha",
+      "role": "owner",
+      "enrolled_at": "2026-10-22T15:43:16Z",
+      "features": {
+        "relax": {
+          "rms": 1.991,
+          "mav": 1.434,
+          "var": 3.964,
+          "peak": 15.983,
+          "wl": 1.137,
+          "zcr": 0.282
+        },
+        "clench": {
+          "rms": 23.498,
+          "mav": 14.724,
+          "var": 552.17,
+          "peak": 136.6,
+          "wl": 14.45,
+          "zcr": 0.2965
+        },
+        "flex": {
+          "rms": 3.558,
+          "mav": 2.634,
+          "var": 12.659,
+          "peak": 23.878,
+          "wl": 2.297,
+          "zcr": 0.2945
+        }
+      },
+      "recordings": {
+        "relax": "subject_04_relax_20261022_154316.csv",
+        "clench": "subject_04_clench_20261022_154316.csv",
+        "flex": "subject_04_flex_20261022_154316.csv"
+      }
+    },
+    "subject_05": {
+      "name": "AShoka SIg",
+      "role": "owner",
+      "enrolled_at": "2026-10-23T00:11:52Z",
+      "features": {
+        "relax": {
+          "rms": 2.901,
+          "mav": 2.151,
+          "var": 8.416,
+          "peak": 15.726,
+          "wl": 2.008,
+          "zcr": 0.3035
+        },
+        "clench": {
+          "rms": 38.51,
+          "mav": 25.554,
+          "var": 1929.853,
+          "peak": 227.829,
+          "wl": 22.935,
+          "zcr": 0.304
+        },
+        "flex": {
+          "rms": 2.345,
+          "mav": 1.812,
+          "var": 5.499,
+          "peak": 11.068,
+          "wl": 1.75,
+          "zcr": 0.3255
+        }
+      },
+      "recordings": {
+        "relax": "subject_05_relax_20261023_001152.csv",
+        "clench": "subject_05_clench_20261023_001639.csv",
+        "flex": "subject_05_flex_20261023_001152.csv"
+      },
+      "trials_count": 10,
+      "last_updated": "2026-10-23T00:16:39Z"
     }
   }
 }

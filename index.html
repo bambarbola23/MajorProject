@@ -44,6 +44,61 @@
                 linear-gradient(to right, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
         }
+
+        /* Cyber-Vault Door Styling */
+        .vault-frame {
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.99) 100%);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0, 0, 0, 0.8);
+        }
+        .vault-door-panel {
+            transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+        }
+        .vault-portal-open .vault-door-left {
+            transform: translateX(-102%);
+        }
+        .vault-portal-open .vault-door-right {
+            transform: translateX(102%);
+        }
+        .vault-portal-locked .vault-door-left {
+            transform: translateX(0%);
+        }
+        .vault-portal-locked .vault-door-right {
+            transform: translateX(0%);
+        }
+        .vault-alarm-strobe {
+            animation: vault-breach-pulse 0.45s infinite alternate;
+        }
+        @keyframes vault-breach-pulse {
+            from { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3), inset 0 0 15px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+            to { box-shadow: 0 0 45px rgba(239, 68, 68, 0.9), inset 0 0 35px rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 1); }
+        }
+        .vault-unlocked-glow {
+            animation: vault-success-pulse 1.8s infinite ease-in-out;
+        }
+        @keyframes vault-success-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.6); }
+            50% { box-shadow: 0 0 50px rgba(16, 185, 129, 0.9), inset 0 0 35px rgba(16, 185, 129, 0.45); border-color: rgba(16, 185, 129, 0.95); }
+        }
+        .gear-rotate-cw {
+            animation: gear-spin 22s linear infinite;
+        }
+        .gear-rotate-ccw {
+            animation: gear-spin-rev 22s linear infinite;
+        }
+        @keyframes gear-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes gear-spin-rev {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+        .bg-stripes-amber {
+            background-image: repeating-linear-gradient(45deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.4) 10px, transparent 10px, transparent 20px);
+        }
     </style>
 </head>
 <body class="min-h-screen grid-overlay relative overflow-x-hidden">
@@ -104,6 +159,12 @@
                 </button>
                 <button onclick="switchTab('emg-compare')" id="nav-emg-compare" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-pink-300 hover:text-white hover:bg-pink-600/20 text-xs font-bold border border-pink-500/30 transition">
                     <i class="fa-solid fa-people-arrows w-4 text-pink-400"></i> Dual-Person EMG Studio
+                </button>
+                <button onclick="switchTab('vault-arena')" id="nav-vault-arena" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-amber-300 hover:text-white hover:bg-amber-600/20 text-xs font-bold border border-amber-500/30 transition">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-vault w-4 text-amber-400"></i> Vault Arena (Lock/Unlock)
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-3xs border border-amber-500/40 font-mono-plex">ARENA</span>
                 </button>
                 <button onclick="switchTab('enrollment')" id="nav-enrollment" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-xs font-semibold">
                     <i class="fa-solid fa-id-card w-4"></i> Biometric Enrollment
@@ -765,7 +826,56 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Registered Biometric Identity Table -->
+                <!-- Section 3: Append Contraction Trial & Envelope Refinement -->
+                <div id="enr-append-section" class="bg-gradient-to-r from-cyan-950/40 via-black/60 to-indigo-950/40 border border-cyan-500/30 rounded-2xl p-5 space-y-4 shadow-xl">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-3xs font-mono-plex font-bold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase">
+                                    <i class="fa-solid fa-layer-group mr-1"></i> ENVELOPE ENRICHMENT
+                                </span>
+                                <h4 class="text-sm font-black text-white uppercase font-orbitron tracking-wider">Append Contraction Trial to Existing User</h4>
+                            </div>
+                            <p class="text-gray-400 text-3xs mt-0.5">
+                                Enrich and sharpen any enrolled user's biometric template by recording additional 4.0-second trials. Updates rolling features and automatically recalibrates if user is Master Key.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label class="block text-3xs font-mono-plex text-gray-400 uppercase mb-1">Target Enrolled User:</label>
+                            <select id="append-user-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono-plex text-xs focus:border-cyan-500 focus:outline-none transition">
+                                <option value="">Loading enrolled users...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-3xs font-mono-plex text-gray-400 uppercase mb-1">Contraction Gesture:</label>
+                            <select id="append-gesture-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono-plex text-xs focus:border-cyan-500 focus:outline-none transition">
+                                <option value="clench">Power Clench (Maximum Voluntary Force)</option>
+                                <option value="flex">Wrist Flex (Upward / Downward Extension)</option>
+                                <option value="relax">Rest Baseline (Quiet Neuromuscular State)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button onclick="startAppendTrialRecording()" id="btn-append-trial" class="w-full px-4 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition shadow flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus-circle"></i> Record 4.0s Trial & Append
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                            <div id="append-prog-bar" class="bg-gradient-to-r from-cyan-400 to-indigo-400 h-1.5 transition-all duration-75" style="width: 0%;"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-3xs font-mono-plex">
+                            <span id="append-status-msg" class="text-gray-400">Select target user and gesture, then click Record.</span>
+                            <span class="text-cyan-400">4.0s Window (2000 points @ 500Hz)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Registered Biometric Identity Table -->
                 <div class="bg-black/40 border border-slate-850 rounded-2xl p-5 space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                         <div>
@@ -1345,6 +1455,406 @@
 
             </div>
 
+            <!-- TAB 8: BIOMETRIC VAULT & LOCK/UNLOCK ARENA -->
+            <div id="tab-content-vault-arena" class="glass-card rounded-3xl p-6 shadow-2xl space-y-6 hidden">
+                
+                <!-- Arena Header & Target Master Transparency Banner -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-indigo-500/20 pb-4">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span class="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-2xs font-mono-plex rounded font-semibold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 led-active"></span> TARGET-BASED VERIFICATION ARENA
+                            </span>
+                            <span class="text-3xs text-gray-400 font-mono-plex">OPEN-SET EXPERIMENTAL BENCHMARK</span>
+                            <span id="arena-banner-target-badge" class="px-2.5 py-0.5 bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-2xs font-mono-plex rounded font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-key text-amber-400"></i> TARGET MASTER: <span id="arena-header-target-name">subject_02</span>
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-black font-orbitron text-white tracking-wide">
+                            Biometric Vault & Lock/Unlock Arena
+                        </h3>
+                        <p class="text-xs text-gray-300">
+                            Transparently challenge any enrolled master profile with live neuromuscular contractions from hardware or recorded impostor tokens.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="initVaultArena()" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-arrows-rotate"></i> Sync Arena
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Arena Master & Challenger Control Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Left Column: Target Master Selection & Envelope Telemetry -->
+                    <div class="bg-slate-950/70 border border-amber-500/30 rounded-2xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-white uppercase tracking-wider font-orbitron flex items-center gap-2">
+                                        <i class="fa-solid fa-crown text-amber-400"></i> Target Master (Vault Lock)
+                                    </span>
+                                </div>
+                                <span class="text-3xs text-amber-300 font-mono-plex font-bold" id="arena-master-status-indicator">CHALLENGE TARGET</span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-3xs font-mono-plex text-gray-400 uppercase">Select Target Master Profile:</label>
+                                        <span class="text-3xs text-cyan-400 font-mono-plex cursor-pointer hover:underline" onclick="switchTab('enrollment')">Manage in Registry &rarr;</span>
+                                    </div>
+                                    <select id="arena-target-master" onchange="onArenaMasterChange()" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3 py-2.5 text-white font-mono-plex text-xs focus:border-amber-400 focus:outline-none transition">
+                                        <option value="">Loading master profiles...</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex items-center justify-between p-2.5 bg-black/50 border border-slate-850 rounded-xl text-3xs font-mono-plex">
+                                    <span class="text-gray-400">System Master Status:</span>
+                                    <span id="arena-system-master-status" class="text-emerald-400 font-bold">Matches System Master</span>
+                                    <button onclick="makeSelectedTargetActiveMaster()" id="btn-arena-promote-master" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold transition">
+                                        <i class="fa-solid fa-crown mr-1"></i> Promote to Global Owner
+                                    </button>
+                                </div>
+
+                                <!-- Master Baseline Telemetry Badges -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 font-mono-plex text-3xs">
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">STORED TRIALS</span>
+                                        <span id="arena-master-trials" class="text-amber-400 font-bold text-xs">-- trials</span>
+                                    </div>
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">BASELINE RMS</span>
+                                        <span id="arena-master-rms" class="text-cyan-400 font-bold text-xs">-- &mu;V</span>
+                                    </div>
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">PEAK AMPLITUDE</span>
+                                        <span id="arena-master-peak" class="text-indigo-300 font-bold text-xs">-- &mu;V</span>
+                                    </div>
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">MEAN FREQUENCY</span>
+                                        <span id="arena-master-meanfreq" class="text-emerald-400 font-bold text-xs">-- Hz</span>
+                                    </div>
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">MAHALANOBIS D_th</span>
+                                        <span id="arena-master-dth" class="text-pink-400 font-bold text-xs">-- D_th</span>
+                                    </div>
+                                    <div class="bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                                        <span class="text-gray-400 block mb-0.5">PASS CRITERIA</span>
+                                        <span class="text-emerald-400 font-bold text-xs">D &le; D_th (Conf &ge;75%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info Pill -->
+                        <div class="bg-black/40 border border-slate-850 p-2.5 rounded-xl text-3xs font-mono-plex text-gray-400 flex items-center gap-2 mt-3">
+                            <i class="fa-solid fa-circle-info text-amber-400 text-xs"></i>
+                            <span>All unlock challenges are rigorously evaluated against this master envelope using the Open-Set Mahalanobis metric.</span>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Challenger Configuration & Mode Deck -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="text-xs font-bold text-white uppercase tracking-wider font-orbitron flex items-center gap-2">
+                                    <i class="fa-solid fa-hand-back-fist text-cyan-400"></i> Challenger Configuration
+                                </span>
+                                <!-- Mode Selector Pills -->
+                                <div class="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800 font-mono-plex text-3xs">
+                                    <button onclick="setArenaChallengerMode('live')" id="arena-tab-btn-live" class="px-2.5 py-1 rounded bg-cyan-600 text-white font-bold transition">
+                                        <i class="fa-solid fa-microchip mr-1"></i> Live Hardware
+                                    </button>
+                                    <button onclick="setArenaChallengerMode('profile')" id="arena-tab-btn-profile" class="px-2.5 py-1 rounded text-gray-400 hover:text-white transition">
+                                        <i class="fa-solid fa-users-viewfinder mr-1"></i> Stored Profile
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Mode A: Live Hardware Arm Contraction Container -->
+                            <div id="arena-mode-live-panel" class="space-y-3">
+                                <div class="p-3 bg-black/60 border border-slate-800 rounded-xl space-y-2">
+                                    <div class="flex justify-between items-center text-3xs font-mono-plex">
+                                        <span class="text-gray-300 font-bold flex items-center gap-1.5">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-400 led-active"></span> Live Arm Input (COM3 Stream)
+                                        </span>
+                                        <span id="arena-live-sampling-text" class="text-cyan-400">500 Hz Active</span>
+                                    </div>
+                                    <div class="h-16 bg-slate-950 border border-slate-900 rounded-lg overflow-hidden relative">
+                                        <canvas id="arena-live-canvas" width="380" height="60" class="w-full h-full block"></canvas>
+                                        <div id="arena-live-countdown-overlay" class="absolute inset-0 bg-black/70 flex items-center justify-center font-orbitron font-black text-amber-400 text-lg hidden">
+                                            READY: 3s
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between text-3xs font-mono-plex text-gray-400">
+                                        <span>Live RMS: <span id="arena-live-rms-val" class="text-white">--</span></span>
+                                        <span>Peak Voltage: <span id="arena-live-peak-val" class="text-white">--</span></span>
+                                        <span>Window: 3.0s (1500 pts)</span>
+                                    </div>
+                                </div>
+
+                                <button onclick="runArenaLiveChallenge()" id="btn-arena-live-challenge" class="w-full py-3 bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-fingerprint text-sm"></i> INITIATE LIVE 3-SECOND CLENCH CHALLENGE
+                                </button>
+                            </div>
+
+                            <!-- Mode B: Stored Enrolled Profile Impostor Container -->
+                            <div id="arena-mode-profile-panel" class="space-y-3 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono-plex">
+                                    <div>
+                                        <label class="block text-3xs text-gray-400 uppercase mb-1">Challenger Profile:</label>
+                                        <select id="arena-challenger-user" onchange="onArenaChallengerChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-cyan-500 focus:outline-none transition">
+                                            <option value="">Select profile...</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-3xs text-gray-400 uppercase mb-1">Contraction Token:</label>
+                                        <select id="arena-challenger-gesture" onchange="onArenaChallengerChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-cyan-500 focus:outline-none transition">
+                                            <option value="clench">Power Clench</option>
+                                            <option value="flex">Wrist Flex</option>
+                                            <option value="relax">Rest Baseline</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Challenger Profile Preview Card -->
+                                <div class="p-3 bg-black/60 border border-slate-800 rounded-xl space-y-2 text-3xs font-mono-plex">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-400">Profile Role:</span>
+                                        <span id="arena-challenger-role-badge" class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/40 font-bold">IMPOSTOR / VISITOR</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="bg-slate-950 p-1.5 rounded border border-slate-900">
+                                            <span class="text-gray-500 block">RMS:</span>
+                                            <span id="arena-challenger-rms" class="text-white font-bold">--</span>
+                                        </div>
+                                        <div class="bg-slate-950 p-1.5 rounded border border-slate-900">
+                                            <span class="text-gray-500 block">PEAK:</span>
+                                            <span id="arena-challenger-peak" class="text-white font-bold">--</span>
+                                        </div>
+                                        <div class="bg-slate-950 p-1.5 rounded border border-slate-900">
+                                            <span class="text-gray-500 block">FREQ:</span>
+                                            <span id="arena-challenger-freq" class="text-white font-bold">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onclick="runArenaProfileChallenge()" id="btn-arena-profile-challenge" class="w-full py-3 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow-lg shadow-pink-600/30 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-people-arrows text-sm"></i> CONFRONT MASTER WITH STORED PROFILE
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress / Status Footer -->
+                        <div class="bg-black/40 border border-slate-850 p-2.5 rounded-xl text-3xs font-mono-plex flex items-center justify-between text-gray-400 mt-3">
+                            <span id="arena-status-msg">Ready to challenge target master.</span>
+                            <span class="text-cyan-400 font-bold" id="arena-mode-indicator">MODE: LIVE HARDWARE</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Grand Cyber-Vault Blast Door Centerpiece -->
+                <div id="vault-arena-portal-container" class="vault-frame vault-portal-locked rounded-3xl p-6 relative overflow-hidden transition-all duration-700">
+                    
+                    <!-- Top Portal Clearance Bar -->
+                    <div class="flex justify-between items-center border-b border-amber-500/20 pb-3 mb-6 relative z-10">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 led-active"></span>
+                            <span class="text-xs font-mono-plex font-bold text-white tracking-widest uppercase">
+                                BIO-QUANTUM LOCK PORTAL &bull; LEVEL 4
+                            </span>
+                        </div>
+                        <div id="vault-status-pill" class="px-3.5 py-1 rounded-full text-xs font-mono-plex font-bold bg-slate-900/90 border border-amber-500/40 text-amber-300 flex items-center gap-2">
+                            <i class="fa-solid fa-lock"></i> VAULT SECURED &bull; LOCKED
+                        </div>
+                    </div>
+
+                    <!-- Center Blast Door Graphical Representation -->
+                    <div class="relative w-full max-w-xl mx-auto h-56 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-black/80 my-2">
+                        
+                        <!-- Inner Vault Core (Visible when blast doors slide open!) -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-emerald-950/80 via-slate-950 to-emerald-950/80 p-4 text-center">
+                            <div class="w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-300 text-3xl shadow-xl shadow-emerald-500/50 mb-2 vault-unlocked-glow">
+                                <i class="fa-solid fa-key text-amber-400"></i>
+                            </div>
+                            <span class="text-sm font-orbitron font-black text-emerald-300 tracking-wider">INNER SANCTUM UNLOCKED</span>
+                            <span class="text-3xs font-mono-plex text-emerald-400/80">Biometric Template Verified &bull; Cryptographic Token Released</span>
+                        </div>
+
+                        <!-- Left Heavy Blast Door Panel -->
+                        <div class="vault-door-panel vault-door-left absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border-r-2 border-amber-500/50 z-20 flex flex-col justify-between p-3 shadow-2xl">
+                            <div class="flex justify-between items-center text-4xs font-mono-plex text-amber-500/50">
+                                <span>BLAST_DOOR_L</span>
+                                <span>PIN_01: LOCKED</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <div class="w-12 h-12 rounded-full border border-amber-500/30 flex items-center justify-center text-amber-500/40 text-sm gear-rotate-cw">
+                                    <i class="fa-solid fa-gear"></i>
+                                </div>
+                            </div>
+                            <div class="h-2 w-full bg-stripes-amber opacity-30"></div>
+                        </div>
+
+                        <!-- Right Heavy Blast Door Panel -->
+                        <div class="vault-door-panel vault-door-right absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-slate-900 via-slate-850 to-slate-900 border-l-2 border-amber-500/50 z-20 flex flex-col justify-between p-3 shadow-2xl">
+                            <div class="flex justify-between items-center text-4xs font-mono-plex text-amber-500/50">
+                                <span>PIN_02: LOCKED</span>
+                                <span>BLAST_DOOR_R</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <div class="w-12 h-12 rounded-full border border-amber-500/30 flex items-center justify-center text-amber-500/40 text-sm gear-rotate-ccw">
+                                    <i class="fa-solid fa-gear"></i>
+                                </div>
+                            </div>
+                            <div class="h-2 w-full bg-stripes-amber opacity-30"></div>
+                        </div>
+
+                        <!-- Center Iris Scanner Hub (Floats on the seam between doors) -->
+                        <div id="vault-iris-hub" class="absolute z-30 w-20 h-20 rounded-full bg-slate-950 border-2 border-amber-400 flex flex-col items-center justify-center text-amber-400 shadow-xl shadow-amber-500/30 transition-all duration-500">
+                            <i id="vault-iris-icon" class="fa-solid fa-shield-halved text-2xl"></i>
+                            <span id="vault-iris-sub" class="text-4xs font-mono-plex mt-0.5 text-gray-400">READY</span>
+                        </div>
+
+                    </div>
+
+                    <!-- Bottom Vault Decision Banner -->
+                    <div id="vault-verdict-box" class="mt-4 p-4 rounded-2xl bg-black/60 border border-slate-800 text-center space-y-1.5 transition-all duration-500">
+                        <div class="flex items-center justify-center gap-2">
+                            <span id="vault-verdict-tag" class="px-2 py-0.5 rounded text-3xs font-mono-plex font-bold uppercase bg-slate-800 text-gray-300">
+                                STATUS
+                            </span>
+                            <h4 id="vault-verdict-title" class="text-base font-orbitron font-black text-white tracking-wide">
+                                VAULT ENGAGED &bull; AWAITING BIOMETRIC CHALLENGE
+                            </h4>
+                        </div>
+                        <p id="vault-verdict-desc" class="text-xs text-gray-400 font-mono-plex max-w-2xl mx-auto">
+                            Select a target master above and challenge using either live hardware clench or an enrolled profile to observe the real-time biometric lock/unlock decision.
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Biometric Variance & Analytical Metrics Deck -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Metric Card 1: Match Confidence Score -->
+                    <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-white uppercase font-orbitron flex items-center gap-1.5">
+                                <i class="fa-solid fa-gauge-high text-cyan-400"></i> Match Confidence
+                            </span>
+                            <span class="text-3xs font-mono-plex text-gray-400">PASS: &ge;75%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-3xl font-black font-orbitron text-white" id="arena-metric-conf">
+                                --%
+                            </div>
+                            <div id="arena-metric-conf-badge" class="px-2.5 py-1 rounded-lg text-3xs font-mono-plex font-bold bg-slate-900 border border-slate-800 text-gray-500">
+                                NO DATA
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+                            <div id="arena-metric-conf-bar" class="bg-cyan-500 h-2 transition-all duration-700" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Metric Card 2: Mahalanobis Distance vs Threshold -->
+                    <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-white uppercase font-orbitron flex items-center gap-1.5">
+                                <i class="fa-solid fa-ruler-combined text-amber-400"></i> Mahalanobis Distance
+                            </span>
+                            <span class="text-3xs font-mono-plex text-gray-400">PASS: D &le; D_th</span>
+                        </div>
+                        <div class="flex items-center justify-between font-mono-plex">
+                            <div>
+                                <span class="text-gray-400 text-3xs block">CHALLENGER D_M</span>
+                                <span class="text-2xl font-black text-white" id="arena-metric-dist">--</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-gray-400 text-3xs block">MASTER THRESHOLD</span>
+                                <span class="text-lg font-bold text-amber-400" id="arena-metric-dth">--</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-3xs font-mono-plex pt-1">
+                            <span class="text-gray-400">Envelope Margin:</span>
+                            <span id="arena-metric-margin" class="text-gray-300 font-bold">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Metric Card 3: Instant Decision Summary -->
+                    <div class="bg-black/50 border border-slate-850 rounded-2xl p-4 space-y-3 flex flex-col justify-between">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="text-xs font-bold text-white uppercase font-orbitron flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-virus text-indigo-400"></i> Decision Summary
+                            </span>
+                            <span class="text-3xs font-mono-plex text-gray-400">STAGE 3 ML</span>
+                        </div>
+                        <div class="space-y-1.5 text-3xs font-mono-plex">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Gate Output:</span>
+                                <span id="arena-metric-verdict" class="text-white font-bold">AWAITING TEST</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Target Master:</span>
+                                <span id="arena-metric-target" class="text-cyan-300 font-bold">--</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Challenger:</span>
+                                <span id="arena-metric-challenger" class="text-gray-300">--</span>
+                            </div>
+                        </div>
+                        <div id="arena-metric-reason" class="p-2 rounded-lg bg-slate-950 border border-slate-900 text-4xs font-mono-plex text-gray-400">
+                            Run a challenge above to see real-time boundary math.
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Session Challenge Audit Log Table -->
+                <div class="bg-black/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div>
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider font-orbitron flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Arena Challenge Session Audit Log
+                            </h4>
+                            <p class="text-3xs text-gray-400 font-mono-plex mt-0.5">Real-time log of all lock/unlock attempts conducted in this session</p>
+                        </div>
+                        <button onclick="clearArenaAuditLog()" class="text-3xs font-mono-plex text-gray-400 hover:text-white px-2 py-1 rounded bg-slate-900 border border-slate-800 transition">
+                            Clear Log
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs font-mono-plex">
+                            <thead>
+                                <tr class="text-3xs text-gray-400 border-b border-slate-800">
+                                    <th class="pb-2">TIMESTAMP</th>
+                                    <th class="pb-2">TARGET MASTER</th>
+                                    <th class="pb-2">CHALLENGER &bull; MODE</th>
+                                    <th class="pb-2">DISTANCE (D_M)</th>
+                                    <th class="pb-2">THRESHOLD</th>
+                                    <th class="pb-2">CONFIDENCE</th>
+                                    <th class="pb-2 text-right">GATE VERDICT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="arena-audit-tbody" class="divide-y divide-slate-900 text-3xs">
+                                <tr>
+                                    <td colspan="7" class="py-4 text-center text-gray-500 font-mono-plex">
+                                        No challenge attempts logged in this session yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
         </section>
 
     </main>
@@ -1369,7 +1879,7 @@
 
         // Navigation Switcher
         function switchTab(tabId) {
-            const tabs = ['dashboard', 'visualizer', 'emg-compare', 'enrollment', 'live-signals', 'dsp', 'ml-model', 'history'];
+            const tabs = ['dashboard', 'visualizer', 'emg-compare', 'vault-arena', 'enrollment', 'live-signals', 'dsp', 'ml-model', 'history'];
             tabs.forEach(t => {
                 const el = document.getElementById(`tab-content-${t}`);
                 if (el) el.classList.add('hidden');
@@ -1380,6 +1890,8 @@
                             nav.className = "flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 border border-emerald-500/40";
                         } else if (t === 'emg-compare') {
                             nav.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-pink-600 text-white text-xs font-bold shadow-lg shadow-pink-600/30 border border-pink-500/40";
+                        } else if (t === 'vault-arena') {
+                            nav.className = "flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-600/30 border border-amber-500/40";
                         } else {
                             nav.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 border border-indigo-500/40";
                         }
@@ -1387,6 +1899,8 @@
                         nav.className = "flex items-center justify-between px-3 py-2.5 rounded-xl text-emerald-400 hover:text-white hover:bg-emerald-600/20 text-xs font-bold border border-emerald-500/30 transition";
                     } else if (t === 'emg-compare') {
                         nav.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl text-pink-300 hover:text-white hover:bg-pink-600/20 text-xs font-bold border border-pink-500/30 transition";
+                    } else if (t === 'vault-arena') {
+                        nav.className = "flex items-center justify-between px-3 py-2.5 rounded-xl text-amber-300 hover:text-white hover:bg-amber-600/20 text-xs font-bold border border-amber-500/30 transition";
                     } else {
                         nav.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 text-xs font-semibold";
                     }
@@ -1396,10 +1910,13 @@
             if (activeEl) activeEl.classList.remove('hidden');
             activeTab = tabId;
 
-            // Trigger canvas draw if switching to emg-compare
+            // Trigger canvas draw if switching to emg-compare or vault-arena
             if (tabId === 'emg-compare') {
                 if (cmpStep === 6) renderCompareDualCanvas();
                 else renderCompareLiveCanvas();
+            }
+            if (tabId === 'vault-arena') {
+                initVaultArena();
             }
             if (tabId === 'enrollment') {
                 loadEnrolledUsers();
@@ -2094,6 +2611,10 @@
 
             // Draw Signal Variation Visualizer
             drawVisualizerOscilloscope();
+
+            if (activeTab === 'vault-arena') {
+                drawArenaLiveOscilloscope();
+            }
 
             requestAnimationFrame(animate);
         }
@@ -2851,17 +3372,18 @@
         let currentEnrollRecordings = { relax: [], clench: [], flex: [] };
         let isEnrollRecording = false;
 
+        let lastLoadedRegistry = null;
+
         async function loadEnrolledUsers() {
             try {
                 const resp = await fetch('/api/enrolled_users');
                 const reg = await resp.json();
+                lastLoadedRegistry = reg;
                 const tbody = document.getElementById('enr-users-tbody');
                 const countBadge = document.getElementById('enr-users-count');
                 const ownerBadge = document.getElementById('enr-owner-badge');
                 const calibOwner = document.getElementById('calib-owner-id');
-                
-                if (!tbody) return;
-                tbody.innerHTML = '';
+                const appendSelect = document.getElementById('append-user-select');
                 
                 const users = reg.users || {};
                 const ownerId = reg.owner_id || 'subject_01';
@@ -2870,6 +3392,17 @@
                 if (countBadge) countBadge.innerText = `${userKeys.length} Profiles Enrolled`;
                 if (ownerBadge) ownerBadge.innerText = `ACTIVE OWNER: ${ownerId}`;
                 if (calibOwner) calibOwner.innerText = ownerId;
+
+                // Sync Append User dropdown
+                if (appendSelect) {
+                    const curVal = appendSelect.value;
+                    appendSelect.innerHTML = userKeys.map(uid => 
+                        `<option value="${uid}" ${uid === curVal ? 'selected' : ''}>${uid} - ${(users[uid].name || uid)} (${users[uid].role || 'user'})</option>`
+                    ).join('');
+                }
+
+                if (!tbody) return;
+                tbody.innerHTML = '';
 
                 userKeys.forEach(uid => {
                     const u = users[uid];
@@ -2883,9 +3416,29 @@
                     const feats = u.features ? Object.keys(u.features).join(', ') : 'clench';
                     const dateStr = u.enrolled_at ? u.enrolled_at.replace('T', ' ').slice(0, 19) : 'Baseline Master';
                     
-                    const actionBtn = isOwner 
-                        ? '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-key mr-1"></i>Active Master</span>'
-                        : `<button onclick="recalibrateOpenSetModel('${uid}')" class="px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-3xs font-bold transition">Set as Owner</button>`;
+                    const actionsHtml = isOwner 
+                        ? `<div class="flex items-center justify-end gap-1.5">
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold inline-flex items-center gap-1">
+                                <i class="fa-solid fa-crown text-amber-400"></i>Active Master
+                            </span>
+                            <button onclick="quickSelectAppend('${uid}')" class="px-2 py-1 rounded bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 text-3xs font-bold transition" title="Append Contraction Trial">
+                                <i class="fa-solid fa-plus mr-0.5"></i>Append
+                            </button>
+                            <button onclick="deleteUserProfile('${uid}')" class="px-2 py-1 rounded bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 text-3xs font-bold transition" title="Delete Profile">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                           </div>`
+                        : `<div class="flex items-center justify-end gap-1.5">
+                            <button onclick="setActiveOwner('${uid}')" class="px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-3xs font-bold transition" title="Promote to Master Key">
+                                <i class="fa-solid fa-key mr-1"></i>Set Master
+                            </button>
+                            <button onclick="quickSelectAppend('${uid}')" class="px-2 py-1 rounded bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 text-3xs font-bold transition" title="Append Contraction Trial">
+                                <i class="fa-solid fa-plus mr-0.5"></i>Append
+                            </button>
+                            <button onclick="deleteUserProfile('${uid}')" class="px-2 py-1 rounded bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 text-3xs font-bold transition" title="Delete Profile">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                           </div>`;
 
                     tr.innerHTML = `
                         <td class="py-2.5 font-bold text-white font-mono-plex">${uid}</td>
@@ -2893,10 +3446,13 @@
                         <td class="py-2.5">${roleBadge}</td>
                         <td class="py-2.5 text-gray-400">${feats}</td>
                         <td class="py-2.5 text-gray-500">${dateStr}</td>
-                        <td class="py-2.5 text-right">${actionBtn}</td>
+                        <td class="py-2.5 text-right">${actionsHtml}</td>
                     `;
                     tbody.appendChild(tr);
                 });
+
+                // Also update arena dropdowns if arena is active or populated
+                syncArenaDropdowns(reg);
             } catch (err) {
                 console.error("Failed to load enrolled users:", err);
             }
@@ -3171,6 +3727,614 @@
                     }, 3500);
                 }
             }, 1000);
+        }
+
+        // =========================================================================
+        // PROFILE CRUD & ENVELOPE ENRICHMENT FUNCTIONS
+        // =========================================================================
+        async function setActiveOwner(userId) {
+            if (!confirm(`Are you sure you want to promote '${userId}' to Active Master Key? The open-set pipeline will recalibrate empirical boundaries against this master.`)) return;
+            try {
+                const resp = await fetch('/api/set_active_owner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const res = await resp.json();
+                if (res.status === 'success') {
+                    playGateAudio(true);
+                    await loadEnrolledUsers();
+                    if (activeTab === 'vault-arena') initVaultArena();
+                } else {
+                    alert("Failed to set master: " + (res.message || res.detail));
+                }
+            } catch (err) {
+                alert("Network error: " + err);
+            }
+        }
+
+        async function deleteUserProfile(userId) {
+            if (!confirm(`Are you sure you want to PERMANENTLY DELETE profile '${userId}' and all associated CSV recordings? This action cannot be undone.`)) return;
+            try {
+                const resp = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+                    method: 'DELETE'
+                });
+                const res = await resp.json();
+                if (res.status === 'success') {
+                    playGateAudio(false);
+                    await loadEnrolledUsers();
+                    if (activeTab === 'vault-arena') initVaultArena();
+                } else {
+                    alert("Delete failed: " + (res.detail || res.message));
+                }
+            } catch (err) {
+                alert("Network error: " + err);
+            }
+        }
+
+        function quickSelectAppend(userId) {
+            switchTab('enrollment');
+            const selectEl = document.getElementById('append-user-select');
+            if (selectEl) {
+                selectEl.value = userId;
+            }
+            const section = document.getElementById('enr-append-section');
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+                section.classList.add('ring-2', 'ring-cyan-400');
+                setTimeout(() => section.classList.remove('ring-2', 'ring-cyan-400'), 2000);
+            }
+        }
+
+        let isAppendingTrial = false;
+        async function startAppendTrialRecording() {
+            if (isAppendingTrial) return;
+            const userSelect = document.getElementById('append-user-select');
+            const gestureSelect = document.getElementById('append-gesture-select');
+            const statusEl = document.getElementById('append-status-msg');
+            const btn = document.getElementById('btn-append-trial');
+            const prog = document.getElementById('append-prog-bar');
+
+            if (!userSelect || !userSelect.value) {
+                alert("Please select a target user to append trial data.");
+                return;
+            }
+            const userId = userSelect.value;
+            const gesture = gestureSelect ? gestureSelect.value : 'clench';
+
+            isAppendingTrial = true;
+            if (btn) {
+                btn.className = "w-full px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl transition shadow animate-pulse flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Recording Contraction (4.0s)...`;
+            }
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="text-amber-400 font-bold">Hold firm contraction for '${gesture.toUpperCase()}'...</span>`;
+            }
+
+            let progressPct = 0;
+            const durationMs = 4000;
+            const tickMs = 100;
+            const stepPct = (tickMs / durationMs) * 100;
+
+            const interval = setInterval(async () => {
+                progressPct += stepPct;
+                if (prog) prog.style.width = `${Math.min(100, progressPct)}%`;
+
+                if (progressPct >= 100) {
+                    clearInterval(interval);
+                    const sliceCount = Math.max(300, currentSamplingRate * 4);
+                    const recordedSlice = liveEmgBuffer.slice(-sliceCount);
+
+                    if (statusEl) statusEl.innerHTML = `<span class="text-cyan-400 font-bold">Processing & committing trial to ${userId}...</span>`;
+
+                    try {
+                        const resp = await fetch('/api/append_trial', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                user_id: userId,
+                                gesture: gesture,
+                                samples: recordedSlice,
+                                fs: currentSamplingRate
+                            })
+                        });
+                        const res = await resp.json();
+                        if (res.status === 'success') {
+                            if (statusEl) {
+                                statusEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> ${res.message}</span>`;
+                            }
+                            playGateAudio(true);
+                            await loadEnrolledUsers();
+                            if (activeTab === 'vault-arena') initVaultArena();
+                        } else {
+                            if (statusEl) {
+                                statusEl.innerHTML = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${res.message}</span>`;
+                            }
+                        }
+                    } catch (e) {
+                        if (statusEl) statusEl.innerHTML = `<span class="text-rose-400 font-bold">Network error appending trial.</span>`;
+                    } finally {
+                        if (btn) {
+                            btn.className = "w-full px-4 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition shadow flex items-center justify-center gap-2";
+                            btn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Record 4.0s Trial & Append`;
+                        }
+                        setTimeout(() => {
+                            if (prog) prog.style.width = '0%';
+                            isAppendingTrial = false;
+                        }, 1500);
+                    }
+                }
+            }, tickMs);
+        }
+
+        // =========================================================================
+        // VAULT & LOCK/UNLOCK ARENA ENGINE
+        // =========================================================================
+        let arenaTargetMasterId = null;
+        let arenaChallengerMode = 'live'; // 'live' | 'profile'
+        let arenaAuditLog = [];
+        let isArenaChallenging = false;
+
+        function syncArenaDropdowns(reg) {
+            const masterSelect = document.getElementById('arena-target-master');
+            const challengerSelect = document.getElementById('arena-challenger-user');
+            if (!reg || !reg.users) return;
+            const users = reg.users;
+            const ownerId = reg.owner_id || 'subject_01';
+            const userKeys = Object.keys(users);
+
+            if (masterSelect) {
+                const prev = arenaTargetMasterId || masterSelect.value || ownerId;
+                masterSelect.innerHTML = userKeys.map(uid => {
+                    const isGlobalOwner = (uid === ownerId);
+                    const label = `${uid} - ${(users[uid].name || uid)}${isGlobalOwner ? ' [SYSTEM MASTER]' : ''}`;
+                    return `<option value="${uid}" ${uid === prev ? 'selected' : ''}>${label}</option>`;
+                }).join('');
+                arenaTargetMasterId = masterSelect.value;
+            }
+
+            if (challengerSelect) {
+                const prevCh = challengerSelect.value || (userKeys.find(u => u !== arenaTargetMasterId) || userKeys[0]);
+                challengerSelect.innerHTML = userKeys.map(uid => {
+                    const isSelf = (uid === arenaTargetMasterId);
+                    const label = `${uid} - ${(users[uid].name || uid)}${isSelf ? ' (Self Test)' : ' (Impostor)'}`;
+                    return `<option value="${uid}" ${uid === prevCh ? 'selected' : ''}>${label}</option>`;
+                }).join('');
+            }
+        }
+
+        async function initVaultArena() {
+            try {
+                if (!lastLoadedRegistry) {
+                    const resp = await fetch('/api/enrolled_users');
+                    lastLoadedRegistry = await resp.json();
+                }
+                syncArenaDropdowns(lastLoadedRegistry);
+                onArenaMasterChange();
+                onArenaChallengerChange();
+            } catch (e) {
+                console.error("Failed to init vault arena:", e);
+            }
+        }
+
+        function onArenaMasterChange() {
+            const masterSelect = document.getElementById('arena-target-master');
+            if (!masterSelect) return;
+            arenaTargetMasterId = masterSelect.value;
+
+            const headerTargetName = document.getElementById('arena-header-target-name');
+            if (headerTargetName) headerTargetName.innerText = arenaTargetMasterId;
+
+            const reg = lastLoadedRegistry;
+            if (!reg || !reg.users || !reg.users[arenaTargetMasterId]) return;
+
+            const u = reg.users[arenaTargetMasterId];
+            const isSysOwner = (arenaTargetMasterId === reg.owner_id);
+
+            const sysStatus = document.getElementById('arena-system-master-status');
+            const promoteBtn = document.getElementById('btn-arena-promote-master');
+            if (sysStatus) {
+                sysStatus.innerHTML = isSysOwner 
+                    ? `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-crown mr-1"></i>Active System Master Key</span>` 
+                    : `<span class="text-amber-400 font-bold">Challenger Target (Custom Master Sandbox)</span>`;
+            }
+            if (promoteBtn) {
+                if (isSysOwner) {
+                    promoteBtn.disabled = true;
+                    promoteBtn.className = "px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-3xs font-bold cursor-default";
+                    promoteBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Current System Owner`;
+                } else {
+                    promoteBtn.disabled = false;
+                    promoteBtn.className = "px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-3xs font-bold transition cursor-pointer";
+                    promoteBtn.innerHTML = `<i class="fa-solid fa-crown mr-1"></i> Promote to Global Owner`;
+                }
+            }
+
+            // Fill master telemetry
+            const clenchFeats = (u.features && u.features.clench) || {};
+            const trialsCount = u.trials_count || 1;
+            const trialsEl = document.getElementById('arena-master-trials');
+            const rmsEl = document.getElementById('arena-master-rms');
+            const peakEl = document.getElementById('arena-master-peak');
+            const freqEl = document.getElementById('arena-master-meanfreq');
+            const dthEl = document.getElementById('arena-master-dth');
+
+            if (trialsEl) trialsEl.innerText = `${trialsCount} CSV trials`;
+            if (rmsEl) rmsEl.innerText = clenchFeats.rms ? `${clenchFeats.rms.toFixed(2)} µV` : '--';
+            if (peakEl) peakEl.innerText = clenchFeats.peak ? `${clenchFeats.peak.toFixed(2)} µV` : '--';
+            if (freqEl) freqEl.innerText = clenchFeats.mean_freq ? `${clenchFeats.mean_freq.toFixed(1)} Hz` : '--';
+            if (dthEl) dthEl.innerText = isSysOwner ? `2.68 D_th` : `2.68 D_th (Est)`;
+
+            // Update challenger dropdown to refresh '(Self Test)' label
+            syncArenaDropdowns(reg);
+        }
+
+        function onArenaChallengerChange() {
+            const chSelect = document.getElementById('arena-challenger-user');
+            const roleBadge = document.getElementById('arena-challenger-role-badge');
+            const rmsEl = document.getElementById('arena-challenger-rms');
+            const peakEl = document.getElementById('arena-challenger-peak');
+            const freqEl = document.getElementById('arena-challenger-freq');
+            const gestureSelect = document.getElementById('arena-challenger-gesture');
+
+            if (!chSelect || !lastLoadedRegistry || !lastLoadedRegistry.users) return;
+            const chId = chSelect.value;
+            const gesture = gestureSelect ? gestureSelect.value : 'clench';
+            const u = lastLoadedRegistry.users[chId];
+            if (!u) return;
+
+            const isMaster = (chId === arenaTargetMasterId);
+            if (roleBadge) {
+                roleBadge.className = isMaster
+                    ? "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
+                    : "px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/40 font-bold";
+                roleBadge.innerText = isMaster ? "GENUINE MASTER PROFILE" : "IMPOSTOR / VISITOR";
+            }
+
+            const feats = (u.features && u.features[gesture]) || {};
+            if (rmsEl) rmsEl.innerText = feats.rms ? feats.rms.toFixed(2) : '--';
+            if (peakEl) peakEl.innerText = feats.peak ? feats.peak.toFixed(2) : '--';
+            if (freqEl) freqEl.innerText = feats.mean_freq ? feats.mean_freq.toFixed(1) : '--';
+        }
+
+        function setArenaChallengerMode(mode) {
+            arenaChallengerMode = mode;
+            const btnLive = document.getElementById('arena-tab-btn-live');
+            const btnProfile = document.getElementById('arena-tab-btn-profile');
+            const livePanel = document.getElementById('arena-mode-live-panel');
+            const profilePanel = document.getElementById('arena-mode-profile-panel');
+            const modeInd = document.getElementById('arena-mode-indicator');
+
+            if (mode === 'live') {
+                if (btnLive) btnLive.className = "px-2.5 py-1 rounded bg-cyan-600 text-white font-bold transition";
+                if (btnProfile) btnProfile.className = "px-2.5 py-1 rounded text-gray-400 hover:text-white transition";
+                if (livePanel) livePanel.classList.remove('hidden');
+                if (profilePanel) profilePanel.classList.add('hidden');
+                if (modeInd) modeInd.innerText = "MODE: LIVE HARDWARE (COM3)";
+            } else {
+                if (btnLive) btnLive.className = "px-2.5 py-1 rounded text-gray-400 hover:text-white transition";
+                if (btnProfile) btnProfile.className = "px-2.5 py-1 rounded bg-pink-600 text-white font-bold transition";
+                if (livePanel) livePanel.classList.add('hidden');
+                if (profilePanel) profilePanel.classList.remove('hidden');
+                if (modeInd) modeInd.innerText = "MODE: STORED PROFILE CONFRONTATION";
+            }
+        }
+
+        function drawArenaLiveOscilloscope() {
+            const canvas = document.getElementById('arena-live-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, w, h);
+
+            // Subtle grid
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
+            ctx.stroke();
+
+            const pts = liveEmgBuffer.slice(-150);
+            if (!pts || pts.length < 2) return;
+
+            let sumSq = 0;
+            let peak = 0;
+            for (let i = 0; i < pts.length; i++) {
+                const centered = pts[i] - 512;
+                sumSq += centered * centered;
+                const absVal = Math.abs(centered);
+                if (absVal > peak) peak = absVal;
+            }
+            const rms = Math.sqrt(sumSq / pts.length);
+
+            const rmsEl = document.getElementById('arena-live-rms-val');
+            const peakEl = document.getElementById('arena-live-peak-val');
+            if (rmsEl) rmsEl.innerText = `${rms.toFixed(1)} µV`;
+            if (peakEl) peakEl.innerText = `${peak.toFixed(1)} µV`;
+
+            ctx.strokeStyle = rms > 30 ? '#10b981' : '#06b6d4';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+
+            const step = w / (pts.length - 1);
+            for (let i = 0; i < pts.length; i++) {
+                const norm = (pts[i] - 512) / 350;
+                const y = (h / 2) - (norm * (h / 2.2));
+                const x = i * step;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        async function makeSelectedTargetActiveMaster() {
+            if (!arenaTargetMasterId) return;
+            await setActiveOwner(arenaTargetMasterId);
+        }
+
+        async function runArenaLiveChallenge() {
+            if (isArenaChallenging) return;
+            if (!arenaTargetMasterId) {
+                alert("Please select a target master first.");
+                return;
+            }
+            isArenaChallenging = true;
+
+            const btn = document.getElementById('btn-arena-live-challenge');
+            const overlay = document.getElementById('arena-live-countdown-overlay');
+            const statusMsg = document.getElementById('arena-status-msg');
+
+            if (btn) btn.className = "w-full py-3 bg-amber-600 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow animate-pulse flex items-center justify-center gap-2";
+            if (overlay) overlay.classList.remove('hidden');
+
+            let countdown = 3;
+            if (overlay) overlay.innerText = `HOLD CLENCH: ${countdown}s`;
+            if (statusMsg) statusMsg.innerHTML = `<span class="text-amber-400 font-bold">Sampling muscle contraction against ${arenaTargetMasterId}...</span>`;
+
+            const timer = setInterval(async () => {
+                countdown--;
+                if (countdown > 0) {
+                    if (overlay) overlay.innerText = `HOLD CLENCH: ${countdown}s`;
+                } else {
+                    clearInterval(timer);
+                    if (overlay) overlay.innerText = "EVALUATING MAHALANOBIS ENVELOPE...";
+
+                    const slice = liveEmgBuffer.slice(-Math.max(250, currentSamplingRate * 3));
+                    try {
+                        const resp = await fetch('/api/vault/verify_live', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                target_user_id: arenaTargetMasterId,
+                                samples: slice,
+                                fs: currentSamplingRate
+                            })
+                        });
+                        const data = await resp.json();
+                        renderVaultArenaVerdict(data, arenaTargetMasterId, 'Live Hardware Arm (COM3)');
+                    } catch (err) {
+                        alert("Error during verification: " + err);
+                    } finally {
+                        setTimeout(() => {
+                            if (overlay) overlay.classList.add('hidden');
+                            if (btn) btn.className = "w-full py-3 bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2";
+                            isArenaChallenging = false;
+                        }, 1200);
+                    }
+                }
+            }, 1000);
+        }
+
+        async function runArenaProfileChallenge() {
+            if (isArenaChallenging) return;
+            const chSelect = document.getElementById('arena-challenger-user');
+            const gestureSelect = document.getElementById('arena-challenger-gesture');
+            if (!arenaTargetMasterId || !chSelect || !chSelect.value) {
+                alert("Please select both a target master and challenger profile.");
+                return;
+            }
+            const challengerId = chSelect.value;
+            const gesture = gestureSelect ? gestureSelect.value : 'clench';
+
+            isArenaChallenging = true;
+            const btn = document.getElementById('btn-arena-profile-challenge');
+            const statusMsg = document.getElementById('arena-status-msg');
+
+            if (btn) {
+                btn.className = "w-full py-3 bg-pink-700 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow animate-pulse flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Confronting Master with '${challengerId}'...`;
+            }
+            if (statusMsg) statusMsg.innerHTML = `<span class="text-pink-400 font-bold">Comparing '${challengerId}' (${gesture}) vs Target '${arenaTargetMasterId}'...</span>`;
+
+            try {
+                const resp = await fetch('/api/vault/verify_profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_user_id: arenaTargetMasterId,
+                        challenger_user_id: challengerId,
+                        gesture: gesture
+                    })
+                });
+                const data = await resp.json();
+                renderVaultArenaVerdict(data, arenaTargetMasterId, `${challengerId} (${gesture})`);
+            } catch (err) {
+                alert("Error during profile comparison: " + err);
+            } finally {
+                setTimeout(() => {
+                    if (btn) {
+                        btn.className = "w-full py-3 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold font-orbitron tracking-wide rounded-xl transition shadow-lg shadow-pink-600/30 flex items-center justify-center gap-2";
+                        btn.innerHTML = `<i class="fa-solid fa-people-arrows text-sm"></i> CONFRONT MASTER WITH STORED PROFILE`;
+                    }
+                    isArenaChallenging = false;
+                }, 800);
+            }
+        }
+
+        function renderVaultArenaVerdict(data, targetUser, challengerDesc) {
+            const portal = document.getElementById('vault-arena-portal-container');
+            const statusPill = document.getElementById('vault-status-pill');
+            const irisHub = document.getElementById('vault-iris-hub');
+            const irisIcon = document.getElementById('vault-iris-icon');
+            const irisSub = document.getElementById('vault-iris-sub');
+            const verdictTitle = document.getElementById('vault-verdict-title');
+            const verdictDesc = document.getElementById('vault-verdict-desc');
+            const verdictTag = document.getElementById('vault-verdict-tag');
+
+            const metricConf = document.getElementById('arena-metric-conf');
+            const metricConfBadge = document.getElementById('arena-metric-conf-badge');
+            const metricConfBar = document.getElementById('arena-metric-conf-bar');
+            const metricDist = document.getElementById('arena-metric-dist');
+            const metricDth = document.getElementById('arena-metric-dth');
+            const metricMargin = document.getElementById('arena-metric-margin');
+            const metricVerdict = document.getElementById('arena-metric-verdict');
+            const metricTarget = document.getElementById('arena-metric-target');
+            const metricChallenger = document.getElementById('arena-metric-challenger');
+            const metricReason = document.getElementById('arena-metric-reason');
+
+            const isUnlocked = (data.status === 'UNLOCKED');
+            const dist = typeof data.distance === 'number' ? data.distance : 0;
+            const dth = typeof data.threshold === 'number' ? data.threshold : 2.68;
+            const conf = typeof data.confidence === 'number' ? data.confidence : 0;
+            const margin = (dth - dist).toFixed(2);
+
+            // Update gauges & analytics
+            if (metricConf) metricConf.innerText = `${conf.toFixed(1)}%`;
+            if (metricConfBar) metricConfBar.style.width = `${Math.min(100, Math.max(0, conf))}%`;
+            if (metricConfBadge) {
+                metricConfBadge.className = isUnlocked 
+                    ? "px-2.5 py-1 rounded-lg text-3xs font-mono-plex font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" 
+                    : "px-2.5 py-1 rounded-lg text-3xs font-mono-plex font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                metricConfBadge.innerText = isUnlocked ? "SECURITY PASS" : "BLOCKED";
+            }
+            if (metricDist) metricDist.innerText = dist.toFixed(2);
+            if (metricDth) metricDth.innerText = `${dth.toFixed(2)} D_th`;
+            if (metricMargin) {
+                metricMargin.innerText = margin >= 0 ? `+${margin} (Inside Safe Boundary)` : `${margin} (Boundary Violation)`;
+                metricMargin.className = margin >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+            }
+            if (metricVerdict) {
+                metricVerdict.innerHTML = isUnlocked 
+                    ? `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-lock-open mr-1"></i> ACCESS GRANTED</span>` 
+                    : `<span class="text-rose-400 font-bold"><i class="fa-solid fa-lock mr-1"></i> ACCESS DENIED</span>`;
+            }
+            if (metricTarget) metricTarget.innerText = targetUser;
+            if (metricChallenger) metricChallenger.innerText = challengerDesc;
+            if (metricReason) {
+                metricReason.innerText = data.explanation || (isUnlocked 
+                    ? `Candidate envelope closely aligns with target master (Distance ${dist.toFixed(2)} <= ${dth.toFixed(2)} threshold).` 
+                    : `Neuromuscular profile divergence detected. Distance ${dist.toFixed(2)} exceeds security ceiling of ${dth.toFixed(2)}.`);
+            }
+
+            // Animate Cyber-Vault Door
+            if (isUnlocked) {
+                if (portal) {
+                    portal.classList.remove('vault-portal-locked', 'vault-alarm-strobe');
+                    portal.classList.add('vault-portal-open', 'vault-unlocked-glow');
+                }
+                if (statusPill) {
+                    statusPill.className = "px-3.5 py-1 rounded-full text-xs font-mono-plex font-bold bg-emerald-950/90 border border-emerald-400 text-emerald-300 flex items-center gap-2 shadow-lg shadow-emerald-500/30";
+                    statusPill.innerHTML = `<i class="fa-solid fa-lock-open text-emerald-400"></i> VAULT UNLOCKED &bull; ACCESS GRANTED`;
+                }
+                if (irisHub) {
+                    irisHub.className = "absolute z-30 w-20 h-20 rounded-full bg-slate-950 border-2 border-emerald-400 flex flex-col items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/50 transition-all duration-500";
+                }
+                if (irisIcon) irisIcon.className = "fa-solid fa-lock-open text-2xl text-emerald-400";
+                if (irisSub) {
+                    irisSub.innerText = "GRANTED";
+                    irisSub.className = "text-4xs font-mono-plex mt-0.5 text-emerald-300 font-bold";
+                }
+                if (verdictTag) {
+                    verdictTag.className = "px-2 py-0.5 rounded text-3xs font-mono-plex font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+                    verdictTag.innerText = "AUTHORIZED KEY";
+                }
+                if (verdictTitle) {
+                    verdictTitle.className = "text-base font-orbitron font-black text-emerald-300 tracking-wide";
+                    verdictTitle.innerText = `VAULT UNLOCKED &bull; GENUINE BIOMETRIC MATCH (${conf.toFixed(1)}%)`;
+                }
+                if (verdictDesc) {
+                    verdictDesc.innerText = data.explanation || `Distance ${dist.toFixed(2)} is well within Master threshold ${dth.toFixed(2)}. Access granted to encrypted partition.`;
+                }
+                playGateAudio(true);
+            } else {
+                if (portal) {
+                    portal.classList.remove('vault-portal-open', 'vault-unlocked-glow');
+                    portal.classList.add('vault-portal-locked', 'vault-alarm-strobe');
+                }
+                if (statusPill) {
+                    statusPill.className = "px-3.5 py-1 rounded-full text-xs font-mono-plex font-bold bg-rose-950/90 border border-rose-500 text-rose-300 flex items-center gap-2 shadow-lg shadow-rose-500/30";
+                    statusPill.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> SECURITY LOCKOUT &bull; IMPOSTOR BLOCKED`;
+                }
+                if (irisHub) {
+                    irisHub.className = "absolute z-30 w-20 h-20 rounded-full bg-slate-950 border-2 border-rose-500 flex flex-col items-center justify-center text-rose-400 shadow-xl shadow-rose-500/50 transition-all duration-500";
+                }
+                if (irisIcon) irisIcon.className = "fa-solid fa-ban text-2xl text-rose-500";
+                if (irisSub) {
+                    irisSub.innerText = "DENIED";
+                    irisSub.className = "text-4xs font-mono-plex mt-0.5 text-rose-300 font-bold";
+                }
+                if (verdictTag) {
+                    verdictTag.className = "px-2 py-0.5 rounded text-3xs font-mono-plex font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                    verdictTag.innerText = "SECURITY BREACH";
+                }
+                if (verdictTitle) {
+                    verdictTitle.className = "text-base font-orbitron font-black text-rose-400 tracking-wide";
+                    verdictTitle.innerText = `ACCESS DENIED &bull; IMPOSTOR BIOMETRICS DETECTED`;
+                }
+                if (verdictDesc) {
+                    verdictDesc.innerText = data.explanation || `Mahalanobis Distance ${dist.toFixed(2)} exceeds Master envelope ceiling of ${dth.toFixed(2)}. Blast doors sealed.`;
+                }
+                playGateAudio(false);
+            }
+
+            // Append to Audit Table
+            appendArenaAuditEntry({
+                timestamp: new Date().toLocaleTimeString(),
+                targetMaster: targetUser,
+                challenger: challengerDesc,
+                distance: dist.toFixed(2),
+                threshold: dth.toFixed(2),
+                confidence: `${conf.toFixed(1)}%`,
+                status: isUnlocked ? 'UNLOCKED' : 'BLOCKED'
+            });
+        }
+
+        function appendArenaAuditEntry(entry) {
+            arenaAuditLog.unshift(entry);
+            const tbody = document.getElementById('arena-audit-tbody');
+            if (!tbody) return;
+
+            const badge = entry.status === 'UNLOCKED'
+                ? '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold uppercase">GRANTED</span>'
+                : '<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold uppercase">BLOCKED</span>';
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-900/40 transition";
+            tr.innerHTML = `
+                <td class="py-2.5 font-mono-plex text-gray-400">${entry.timestamp}</td>
+                <td class="py-2.5 font-bold text-white font-mono-plex">${entry.targetMaster}</td>
+                <td class="py-2.5 text-gray-300 font-mono-plex">${entry.challenger}</td>
+                <td class="py-2.5 font-mono-plex ${entry.status === 'UNLOCKED' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${entry.distance}</td>
+                <td class="py-2.5 text-gray-400 font-mono-plex">${entry.threshold}</td>
+                <td class="py-2.5 font-mono-plex text-cyan-300 font-semibold">${entry.confidence}</td>
+                <td class="py-2.5 text-right font-mono-plex">${badge}</td>
+            `;
+
+            if (arenaAuditLog.length === 1) {
+                tbody.innerHTML = '';
+            }
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        function clearArenaAuditLog() {
+            arenaAuditLog = [];
+            const tbody = document.getElementById('arena-audit-tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-gray-500 font-mono-plex">Audit log cleared.</td></tr>`;
+            }
         }
 
         // Start App

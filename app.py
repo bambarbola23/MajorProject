@@ -36,7 +36,12 @@ from ml_pipeline.open_set_engine import (
     open_set_engine,
     enroll_user_profile,
     get_registry,
-    extract_open_set_features
+    extract_open_set_features,
+    delete_user_profile,
+    set_active_owner,
+    append_user_trial,
+    verify_against_target,
+    compare_enrolled_profiles
 )
 
 @asynccontextmanager
@@ -497,6 +502,92 @@ class UserEnrollmentPayload(BaseModel):
 class TokenVerificationPayload(BaseModel):
     samples: List[int]
     fs: Optional[float] = None
+
+class SetOwnerPayload(BaseModel):
+    user_id: str
+
+class AppendTrialPayload(BaseModel):
+    user_id: str
+    gesture: str
+    samples: List[int]
+    fs: Optional[float] = None
+
+class VaultLiveVerifyPayload(BaseModel):
+    target_user_id: str
+    samples: List[int]
+    fs: Optional[float] = None
+
+class VaultProfileVerifyPayload(BaseModel):
+    target_user_id: str
+    challenger_user_id: str
+    gesture: str = "clench"
+    fs: Optional[float] = None
+
+@app.delete("/api/users/{user_id}")
+async def delete_user_route(user_id: str):
+    """Deletes an enrolled user profile and their stored CSV recording files."""
+    try:
+        res = delete_user_profile(user_id)
+        return JSONResponse(res)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/set_active_owner")
+async def set_active_owner_route(payload: SetOwnerPayload):
+    """Sets a specified user as the active Master Key and recalibrates open-set model."""
+    try:
+        res = set_active_owner(payload.user_id)
+        return JSONResponse(res)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/append_trial")
+async def append_trial_route(payload: AppendTrialPayload):
+    """Appends an additional trial recording to enrich an existing user profile."""
+    try:
+        fs = payload.fs or float(state.sampling_rate)
+        res = append_user_trial(payload.user_id, payload.gesture, payload.samples, fs=fs)
+        return JSONResponse(res)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/vault/verify_live")
+async def vault_verify_live_route(payload: VaultLiveVerifyPayload):
+    """Challenges a chosen target master using a live candidate EMG stream."""
+    try:
+        fs = payload.fs or float(state.sampling_rate)
+        res = verify_against_target(payload.target_user_id, payload.samples, fs=fs)
+        dth = res.get("distance_threshold") or getattr(open_set_engine, "distance_threshold", 2.68)
+        res["threshold"] = round(float(dth), 2)
+        dist = res.get("distance", 0.0)
+        is_unlocked = (res.get("status") == "UNLOCKED")
+        if not res.get("explanation"):
+            if is_unlocked:
+                res["explanation"] = f"Genuine biometric envelope: Mahalanobis distance {dist} <= {res['threshold']} threshold. Access granted."
+            else:
+                res["explanation"] = f"Impostor biometric divergence: Mahalanobis distance {dist} exceeds {res['threshold']} threshold. Security lockout engaged."
+        return JSONResponse(res)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+@app.post("/api/vault/verify_profile")
+async def vault_verify_profile_route(payload: VaultProfileVerifyPayload):
+    """Challenges a chosen target master using another enrolled user's stored token."""
+    try:
+        fs = payload.fs or float(state.sampling_rate)
+        res = compare_enrolled_profiles(payload.target_user_id, payload.challenger_user_id, gesture=payload.gesture, fs=fs)
+        dth = res.get("distance_threshold") or getattr(open_set_engine, "distance_threshold", 2.68)
+        res["threshold"] = round(float(dth), 2)
+        dist = res.get("distance", 0.0)
+        is_unlocked = (res.get("status") == "UNLOCKED")
+        if not res.get("explanation"):
+            if is_unlocked:
+                res["explanation"] = f"Profile alignment confirmed: Mahalanobis distance {dist} <= {res['threshold']}. Access granted."
+            else:
+                res["explanation"] = f"Impostor token rejected: Mahalanobis distance {dist} exceeds {res['threshold']}. Lock engaged."
+        return JSONResponse(res)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
 @app.get("/api/enrolled_users")
 async def get_enrolled_users():
